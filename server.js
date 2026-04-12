@@ -73,9 +73,6 @@ app.get("/services", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch services" });
   }
 });
-
-
-// 💰 GET PRICE (FINAL FIXED)
 app.get("/price", async (req, res) => {
   try {
     const country = req.query.country;
@@ -89,17 +86,24 @@ app.get("/price", async (req, res) => {
 
     const serviceData = data[service];
 
-    if (!serviceData) {
+    // ❌ if service not found
+    if (!serviceData || Object.keys(serviceData).length === 0) {
       return res.json({ price: 0 });
     }
 
-    const first = Object.values(serviceData)[0];
-    const costUSD = first.cost || 0;
+    // ✅ get first operator safely
+    const firstOperator = Object.values(serviceData)[0];
+
+    if (!firstOperator || !firstOperator.cost) {
+      return res.json({ price: 0 });
+    }
+
+    const costUSD = firstOperator.cost;
 
     const rate = 1500;
     const costNGN = costUSD * rate;
 
-    // 🔥 YOUR PROFIT SYSTEM
+    // 💰 PROFIT SYSTEM
     let profit = 3000;
 
     const highTier = ["usa", "england", "canada"];
@@ -125,6 +129,10 @@ app.get("/price", async (req, res) => {
     res.status(500).json({ error: "Failed to get price" });
   }
 });
+
+
+// 💰 GET PRICE (FINAL FIXED)
+
 
 
 // 🚀 PORT (RENDER SAFE)
