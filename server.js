@@ -1,3 +1,5 @@
+const axios = require("axios");
+
 app.post('/pay', async (req, res) => {
   const { email } = req.body;
 
@@ -5,25 +7,27 @@ app.post('/pay', async (req, res) => {
     return res.json({ error: 'Email required' });
   }
 
-  const totalAmount = 4000; // ✅ fixed price for now
+  const totalAmount = 4000;
 
   try {
-    const response = await fetch("https://api.korapay.com/merchant/api/v1/charges/initialize", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + process.env.KORAPAY_SECRET_KEY
-      },
-      body: JSON.stringify({
+    const response = await axios.post(
+      "https://api.korapay.com/merchant/api/v1/charges/initialize",
+      {
         amount: totalAmount,
         currency: "NGN",
         email: email,
         reference: "ref_" + Date.now(),
         redirect_url: "https://otp-site.onrender.com"
-      })
-    });
+      },
+      {
+        headers: {
+          Authorization: "Bearer " + process.env.KORAPAY_SECRET_KEY,
+          "Content-Type": "application/json"
+        }
+      }
+    );
 
-    const data = await response.json();
+    const data = response.data;
 
     if (data.status && data.data.checkout_url) {
       res.json({ checkout_url: data.data.checkout_url });
@@ -33,7 +37,7 @@ app.post('/pay', async (req, res) => {
     }
 
   } catch (err) {
-    console.log(err);
+    console.log(err.response?.data || err.message);
     res.json({ error: "Server error" });
   }
 });
