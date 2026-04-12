@@ -6,31 +6,58 @@ const app = express();
 app.use(cors());
 
 // 🌍 GET COUNTRIES (SORTED + TOP FIRST)
-app.get("/countries", async (req, res) => {
+app.get("/services", async (req, res) => {
   try {
-    const r = await fetch("https://5sim.net/v1/guest/countries");
+    const country = req.query.country || "usa";
+
+    const r = await fetch(
+      `https://5sim.net/v1/guest/prices?country=${country}`
+    );
+
     const data = await r.json();
 
+    // 🔥 STRICT FILTER (ONLY VALID SERVICES)
+    const validServices = [];
+
+    for (const key in data) {
+      const value = data[key];
+
+      // must be object AND contain operator with cost
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        Object.values(value).some(v => v.cost)
+      ) {
+        validServices.push(key);
+      }
+    }
+
     const priority = [
-      "usa", "england", "canada", "india",
-      "nigeria", "germany", "france",
-      "netherlands", "sweden", "brazil",
-      "spain", "italy", "turkey"
+      "whatsapp",
+      "telegram",
+      "facebook",
+      "instagram",
+      "twitter",
+      "tiktok",
+      "twitch",
+      "google",
+      "googlevoice",
+      "youtube"
     ];
 
-    const all = Object.keys(data);
-
     const sorted = [
-      ...priority.filter(c => all.includes(c)),
-      ...all.filter(c => !priority.includes(c))
+      ...priority.filter(p => validServices.includes(p)),
+      ...validServices.filter(s => !priority.includes(s))
     ];
 
     res.json(sorted);
 
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch countries" });
+    console.log(err);
+    res.status(500).json({ error: "Failed to fetch services" });
   }
 });
+
 
 // 📱 GET SERVICES (POPULAR FIRST)
 app.get("/services", async (req, res) => {
