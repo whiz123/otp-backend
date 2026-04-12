@@ -5,36 +5,18 @@ const cors = require("cors");
 const app = express();
 app.use(cors());
 
-
-// 🌍 COUNTRIES (TOP FIRST)
+// 🌍 COUNTRIES
 app.get("/countries", async (req, res) => {
   try {
     const r = await fetch("https://5sim.net/v1/guest/countries");
     const data = await r.json();
-
-    const priority = [
-      "usa", "england", "canada", "india",
-      "nigeria", "germany", "france",
-      "netherlands", "sweden", "brazil",
-      "spain", "italy", "turkey"
-    ];
-
-    const all = Object.keys(data);
-
-    const sorted = [
-      ...priority.filter(c => all.includes(c)),
-      ...all.filter(c => !priority.includes(c))
-    ];
-
-    res.json(sorted);
-
+    res.json(Object.keys(data));
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch countries" });
   }
 });
 
-
-// 📱 SERVICES (FIXED CORRECTLY)
+// 📱 SERVICES
 app.get("/services", async (req, res) => {
   try {
     const country = req.query.country || "usa";
@@ -45,15 +27,8 @@ app.get("/services", async (req, res) => {
 
     const data = await r.json();
 
-    // 🔥 REAL FIX — NO FILTER THAT BREAKS THINGS
-    const all = Object.keys(data);
-
-    // ✅ REMOVE ONLY CLEAR BAD KEYS
-    const clean = all.filter(s =>
-      !s.includes(" ") &&      // remove weird names
-      s.length < 20 &&         // remove long junk
-      s !== country            // remove country itself
-    );
+    // 🔥 FIX: access inner object
+    const servicesObj = data[country] || {};
 
     const priority = [
       "whatsapp",
@@ -68,79 +43,20 @@ app.get("/services", async (req, res) => {
       "youtube"
     ];
 
+    const all = Object.keys(servicesObj);
+
     const sorted = [
-      ...priority.filter(p => clean.includes(p)),
-      ...clean.filter(s => !priority.includes(s))
+      ...priority.filter(p => all.includes(p)),
+      ...all.filter(s => !priority.includes(s))
     ];
 
     res.json(sorted);
 
   } catch (err) {
-    console.log(err);
     res.status(500).json({ error: "Failed to fetch services" });
   }
 });
 
-
-// 💰 PRICE (FIXED)
-app.get("/price", async (req, res) => {
-  try {
-    const { country, service } = req.query;
-
-    const r = await fetch(
-      `https://5sim.net/v1/guest/prices?country=${country}`
-    );
-
-    const data = await r.json();
-
-    const serviceData = data[service];
-
-    if (!serviceData) {
-      return res.json({ price: 0 });
-    }
-
-    const first = Object.values(serviceData)[0];
-
-    if (!first || !first.cost) {
-      return res.json({ price: 0 });
-    }
-
-    const costUSD = first.cost;
-
-    const rate = 1500;
-    const costNGN = costUSD * rate;
-
-    // 🔥 PROFIT SYSTEM
-    let profit = 3000;
-
-    const highTier = ["usa", "england", "canada"];
-
-    const africa = [
-      "nigeria", "ghana", "kenya", "southafrica",
-      "uganda", "tanzania", "cameroon", "senegal",
-      "ivorycoast", "ethiopia"
-    ];
-
-    if (highTier.includes(country)) {
-      profit = 3500;
-    } else if (africa.includes(country)) {
-      profit = 2500;
-    }
-
-    const finalPrice = Math.ceil(costNGN + profit);
-
-    res.json({ price: finalPrice });
-
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Failed to get price" });
-  }
-});
-
-
-// 🚀 SERVER
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log("Server running 🚀");
+app.listen(3000, () => {
+  console.log("Server running on port 3000");
 });
