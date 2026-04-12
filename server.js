@@ -33,7 +33,7 @@ app.get("/countries", async (req, res) => {
 });
 
 
-// 📱 GET SERVICES (FIXED CLEAN)
+// 📱 GET SERVICES (FIXED — DO NOT BREAK)
 app.get("/services", async (req, res) => {
   try {
     const country = req.query.country || "usa";
@@ -44,8 +44,8 @@ app.get("/services", async (req, res) => {
 
     const data = await r.json();
 
-    // 🔥 FIX: access inner object
-    const servicesObj = data[country] || {};
+    // ✅ VERY IMPORTANT FIX
+    const servicesObj = data;
 
     const priority = [
       "whatsapp",
@@ -74,7 +74,60 @@ app.get("/services", async (req, res) => {
   }
 });
 
-// 🚀 FIXED PORT FOR RENDER
+
+// 💰 GET PRICE (FINAL FIXED)
+app.get("/price", async (req, res) => {
+  try {
+    const country = req.query.country;
+    const service = req.query.service;
+
+    const r = await fetch(
+      `https://5sim.net/v1/guest/prices?country=${country}`
+    );
+
+    const data = await r.json();
+
+    const serviceData = data[service];
+
+    if (!serviceData) {
+      return res.json({ price: 0 });
+    }
+
+    const first = Object.values(serviceData)[0];
+    const costUSD = first.cost || 0;
+
+    const rate = 1500;
+    const costNGN = costUSD * rate;
+
+    // 🔥 YOUR PROFIT SYSTEM
+    let profit = 3000;
+
+    const highTier = ["usa", "england", "canada"];
+
+    const africa = [
+      "nigeria", "ghana", "kenya", "southafrica",
+      "uganda", "tanzania", "cameroon", "senegal",
+      "ivorycoast", "ethiopia"
+    ];
+
+    if (highTier.includes(country)) {
+      profit = 3500;
+    } else if (africa.includes(country)) {
+      profit = 2500;
+    }
+
+    const finalPrice = Math.ceil(costNGN + profit);
+
+    res.json({ price: finalPrice });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Failed to get price" });
+  }
+});
+
+
+// 🚀 PORT (RENDER SAFE)
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
