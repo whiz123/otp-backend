@@ -5,7 +5,8 @@ const cors = require("cors");
 const app = express();
 app.use(cors());
 
-// 🌍 GET COUNTRIES (SORTED + TOP FIRST)
+
+// 🌍 GET COUNTRIES (TOP FIRST + SORTED)
 app.get("/countries", async (req, res) => {
   try {
     const r = await fetch("https://5sim.net/v1/guest/countries");
@@ -32,7 +33,8 @@ app.get("/countries", async (req, res) => {
   }
 });
 
-// 📱 GET SERVICES (POPULAR FIRST)
+
+// 📱 GET SERVICES (FIXED + CLEAN)
 app.get("/services", async (req, res) => {
   try {
     const country = req.query.country || "usa";
@@ -56,7 +58,10 @@ app.get("/services", async (req, res) => {
       "youtube"
     ];
 
-    const all = Object.keys(data);
+    // ✅ ONLY VALID SERVICES (REMOVE "usa", "england", etc)
+    const all = Object.keys(data).filter(
+      key => typeof data[key] === "object"
+    );
 
     const sorted = [
       ...priority.filter(p => all.some(s => s.includes(p))),
@@ -70,6 +75,7 @@ app.get("/services", async (req, res) => {
   }
 });
 
+
 app.listen(3000, () => {
-  console.log("Server running on port 3000");
+  console.log("Server running on port 3000 🚀");
 });
