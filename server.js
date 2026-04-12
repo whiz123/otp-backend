@@ -1,28 +1,34 @@
-<script>
-async function loadData() {
+import express from "express";
+import fetch from "node-fetch";
+import cors from "cors";
+
+const app = express();
+app.use(cors());
+
+// 🌍 GET COUNTRIES
+app.get("/countries", async (req, res) => {
   try {
-    const countrySelect = document.getElementById("country");
-    const serviceSelect = document.getElementById("service");
+    const r = await fetch("https://5sim.net/v1/guest/countries");
+    const data = await r.json();
+    res.json(Object.keys(data));
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch countries" });
+  }
+});
 
-    // 🌍 TOP COUNTRIES (GLOBAL DEMAND)
-    const countries = [
-      "usa", "england", "canada", "india", "nigeria",
-      "germany", "france", "netherlands", "sweden",
-      "brazil", "spain", "italy", "turkey",
-      "indonesia", "philippines", "southafrica"
-    ];
+// 📱 GET SERVICES
+app.get("/services", async (req, res) => {
+  try {
+    const country = req.query.country || "usa";
 
-    countrySelect.innerHTML = "";
+    const r = await fetch(
+      `https://5sim.net/v1/guest/prices?country=${country}`
+    );
 
-    countries.forEach(c => {
-      const option = document.createElement("option");
-      option.value = c;
-      option.text = c.toUpperCase();
-      countrySelect.appendChild(option);
-    });
+    const data = await r.json();
 
-    // 🔥 POPULAR SERVICES (WHAT PEOPLE BUY)
-    const popularServices = [
+    // 🔥 ONLY POPULAR SERVICES
+    const popular = [
       "whatsapp",
       "telegram",
       "facebook",
@@ -35,67 +41,17 @@ async function loadData() {
       "youtube"
     ];
 
-    // 🎯 FORMAT NAME
-    function formatName(name) {
-      return name
-        .replace("googlevoice", "Google Voice")
-        .replace("youtube", "YouTube")
-        .replace("tiktok", "TikTok")
-        .replace("twitter", "Twitter")
-        .replace("whatsapp", "WhatsApp")
-        .replace("telegram", "Telegram")
-        .replace("facebook", "Facebook")
-        .replace("instagram", "Instagram")
-        .replace("twitch", "Twitch")
-        .replace("google", "Google");
-    }
+    const services = Object.keys(data).filter(s =>
+      popular.some(p => s.includes(p))
+    );
 
-    // 📱 LOAD SERVICES FROM 5SIM
-    async function loadServices() {
-      const selectedCountry = countrySelect.value;
-
-      serviceSelect.innerHTML = "<option>Loading...</option>";
-
-      const res = await fetch(
-        `https://5sim.net/v1/guest/prices?country=${selectedCountry}`
-      );
-
-      const data = await res.json();
-
-      const services = Object.keys(data);
-
-      serviceSelect.innerHTML = "";
-
-      // ✅ SHOW ONLY POPULAR SERVICES AVAILABLE
-      popularServices.forEach(ps => {
-        const match = services.find(s => s.includes(ps));
-
-        if (match) {
-          const option = document.createElement("option");
-          option.value = match;
-          option.text = formatName(ps);
-          serviceSelect.appendChild(option);
-        }
-      });
-
-      // ❌ IF NOTHING FOUND
-      if (serviceSelect.innerHTML === "") {
-        serviceSelect.innerHTML = "<option>No services available</option>";
-      }
-    }
-
-    // 🚀 DEFAULT LOAD
-    countrySelect.value = "usa";
-    await loadServices();
-
-    // 🔁 CHANGE COUNTRY
-    countrySelect.addEventListener("change", loadServices);
+    res.json(services);
 
   } catch (err) {
-    alert("Error loading data");
-    console.log(err);
+    res.status(500).json({ error: "Failed to fetch services" });
   }
-}
+});
 
-loadData();
-</script>
+app.listen(3000, () => {
+  console.log("Server running on port 3000");
+});
