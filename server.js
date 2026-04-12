@@ -4,107 +4,98 @@ async function loadData() {
     const countrySelect = document.getElementById("country");
     const serviceSelect = document.getElementById("service");
 
-    async function fetchData(url) {
-      const res = await fetch(url);
-      return await res.json();
-    }
+    // 🌍 TOP COUNTRIES (GLOBAL DEMAND)
+    const countries = [
+      "usa", "england", "canada", "india", "nigeria",
+      "germany", "france", "netherlands", "sweden",
+      "brazil", "spain", "italy", "turkey",
+      "indonesia", "philippines", "southafrica"
+    ];
 
-    // 🔥 POPULAR SERVICES (LIKE 5SIM DASHBOARD)
+    countrySelect.innerHTML = "";
+
+    countries.forEach(c => {
+      const option = document.createElement("option");
+      option.value = c;
+      option.text = c.toUpperCase();
+      countrySelect.appendChild(option);
+    });
+
+    // 🔥 POPULAR SERVICES (WHAT PEOPLE BUY)
     const popularServices = [
       "whatsapp",
       "telegram",
       "facebook",
       "instagram",
-      "google",
       "twitter",
       "tiktok",
-      "amazon",
-      "discord",
-      "linkedin"
+      "twitch",
+      "google",
+      "googlevoice",
+      "youtube"
     ];
 
-    // 🎯 FORMAT NAME (CLEAN UI)
+    // 🎯 FORMAT NAME
     function formatName(name) {
-      return name.charAt(0).toUpperCase() + name.slice(1);
+      return name
+        .replace("googlevoice", "Google Voice")
+        .replace("youtube", "YouTube")
+        .replace("tiktok", "TikTok")
+        .replace("twitter", "Twitter")
+        .replace("whatsapp", "WhatsApp")
+        .replace("telegram", "Telegram")
+        .replace("facebook", "Facebook")
+        .replace("instagram", "Instagram")
+        .replace("twitch", "Twitch")
+        .replace("google", "Google");
     }
 
-    // 📱 LOAD SERVICES
-    serviceSelect.innerHTML = "";
+    // 📱 LOAD SERVICES FROM 5SIM
+    async function loadServices() {
+      const selectedCountry = countrySelect.value;
 
-    popularServices.forEach(s => {
-      const option = document.createElement("option");
-      option.value = s;
-      option.text = formatName(s);
-      serviceSelect.appendChild(option);
-    });
+      serviceSelect.innerHTML = "<option>Loading...</option>";
 
-    // 🌍 LOAD COUNTRIES BASED ON SERVICE
-    async function loadCountries() {
-      const selectedService = serviceSelect.value;
-
-      countrySelect.innerHTML = "<option>Loading countries...</option>";
-
-      const countries = await fetchData(
-        "https://otp-backend-srw4.onrender.com/countries"
+      const res = await fetch(
+        `https://5sim.net/v1/guest/prices?country=${selectedCountry}`
       );
 
-      let validCountries = [];
+      const data = await res.json();
 
-      // 🔍 CHECK EACH COUNTRY
-      for (let c of countries) {
-        try {
-          const services = await fetchData(
-            `https://otp-backend-srw4.onrender.com/services?country=${c}`
-          );
+      const services = Object.keys(data);
 
-          if (services.includes(selectedService)) {
-            validCountries.push(c);
-          }
-        } catch (err) {
-          continue;
+      serviceSelect.innerHTML = "";
+
+      // ✅ SHOW ONLY POPULAR SERVICES AVAILABLE
+      popularServices.forEach(ps => {
+        const match = services.find(s => s.includes(ps));
+
+        if (match) {
+          const option = document.createElement("option");
+          option.value = match;
+          option.text = formatName(ps);
+          serviceSelect.appendChild(option);
         }
-      }
-
-      countrySelect.innerHTML = "";
-
-      // ✅ SHOW ONLY VALID COUNTRIES
-      validCountries.forEach(c => {
-        const option = document.createElement("option");
-        option.value = c;
-        option.text = c.toUpperCase();
-        countrySelect.appendChild(option);
       });
 
-      // ❌ IF NONE FOUND
-      if (validCountries.length === 0) {
-        countrySelect.innerHTML = "<option>No countries available</option>";
+      // ❌ IF NOTHING FOUND
+      if (serviceSelect.innerHTML === "") {
+        serviceSelect.innerHTML = "<option>No services available</option>";
       }
     }
 
-    // 🚀 INITIAL LOAD
-    await loadCountries();
+    // 🚀 DEFAULT LOAD
+    countrySelect.value = "usa";
+    await loadServices();
 
-    // 🔁 CHANGE SERVICE → UPDATE COUNTRIES
-    serviceSelect.addEventListener("change", loadCountries);
+    // 🔁 CHANGE COUNTRY
+    countrySelect.addEventListener("change", loadServices);
 
   } catch (err) {
-    alert("Error loading data. Please refresh.");
+    alert("Error loading data");
     console.log(err);
   }
 }
 
-// 🟢 BUY BUTTON
-document.getElementById("buyBtn").addEventListener("click", () => {
-  const email = document.getElementById("email").value;
-
-  if (!email) {
-    alert("Please enter your email");
-    return;
-  }
-
-  alert("Next: payment integration 💰");
-});
-
-// 🚀 START
 loadData();
 </script>
