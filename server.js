@@ -72,7 +72,7 @@ app.get("/services", async (req, res) => {
   }
 });
 
-// 💰 PRICE (NOW IN CORRECT POSITION)
+// 💰 PRICE (FINAL BUSINESS LOGIC)
 app.get("/price", async (req, res) => {
   try {
     const country = req.query.country;
@@ -102,10 +102,37 @@ app.get("/price", async (req, res) => {
 
     const costUSD = first.cost;
 
+    // 💱 YOUR RATE
     const rate = 1500;
     const costNGN = costUSD * rate;
 
-    const profit = 3000;
+    // 🔥 PROFIT SYSTEM
+    let profit = 3000;
+
+    const highTier = ["usa", "england", "canada", "australia"];
+
+    const africa = [
+      "nigeria", "ghana", "kenya", "southafrica",
+      "uganda", "tanzania", "cameroon", "senegal",
+      "ivorycoast", "ethiopia"
+    ];
+
+    // 🇮🇹 SPECIAL CASE (ITALY WHATSAPP)
+    if (country === "italy" && service.includes("whatsapp")) {
+      profit = 5000;
+    }
+    // 🌍 HIGH TIER
+    else if (highTier.includes(country)) {
+      profit = 3500;
+    }
+    // 🌍 AFRICA
+    else if (africa.includes(country)) {
+      profit = 2500;
+    }
+    // 🌎 OTHERS
+    else {
+      profit = 3000;
+    }
 
     const finalPrice = Math.ceil(costNGN + profit);
 
