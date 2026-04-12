@@ -1,12 +1,11 @@
 const express = require("express");
-const fetch = require("node-fetch");
 const cors = require("cors");
 
 const app = express();
 app.use(cors());
 
 
-// 🌍 GET COUNTRIES (TOP FIRST + SORTED)
+// 🌍 GET COUNTRIES (TOP FIRST)
 app.get("/countries", async (req, res) => {
   try {
     const r = await fetch("https://5sim.net/v1/guest/countries");
@@ -34,7 +33,7 @@ app.get("/countries", async (req, res) => {
 });
 
 
-// 📱 GET SERVICES (FIXED + CLEAN)
+// 📱 GET SERVICES (FIXED CLEAN)
 app.get("/services", async (req, res) => {
   try {
     const country = req.query.country || "usa";
@@ -58,7 +57,7 @@ app.get("/services", async (req, res) => {
       "youtube"
     ];
 
-    // ✅ ONLY VALID SERVICES (REMOVE "usa", "england", etc)
+    // ✅ ONLY VALID SERVICES (REMOVE COUNTRY KEYS)
     const all = Object.keys(data).filter(
       key => typeof data[key] === "object"
     );
@@ -76,6 +75,9 @@ app.get("/services", async (req, res) => {
 });
 
 
-app.listen(3000, () => {
-  console.log("Server running on port 3000 🚀");
+// 🚀 FIXED PORT FOR RENDER
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log("Server running 🚀");
 });
