@@ -33,7 +33,7 @@ app.get("/countries", async (req, res) => {
 });
 
 
-// 📱 GET SERVICES (FIXED — DO NOT BREAK)
+// 📱 GET SERVICES (FIXED — NO MORE COUNTRY BUG)
 app.get("/services", async (req, res) => {
   try {
     const country = req.query.country || "usa";
@@ -44,8 +44,14 @@ app.get("/services", async (req, res) => {
 
     const data = await r.json();
 
-    // ✅ VERY IMPORTANT FIX
-    const servicesObj = data;
+    // ✅ FILTER ONLY REAL SERVICES
+    const all = Object.keys(data).filter(service => {
+      const obj = data[service];
+      return (
+        typeof obj === "object" &&
+        Object.values(obj)[0]?.cost !== undefined
+      );
+    });
 
     const priority = [
       "whatsapp",
@@ -60,8 +66,6 @@ app.get("/services", async (req, res) => {
       "youtube"
     ];
 
-    const all = Object.keys(servicesObj);
-
     const sorted = [
       ...priority.filter(p => all.includes(p)),
       ...all.filter(s => !priority.includes(s))
@@ -73,6 +77,9 @@ app.get("/services", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch services" });
   }
 });
+
+
+// 💰 GET PRICE (KEEP AS IS)
 app.get("/price", async (req, res) => {
   try {
     const country = req.query.country;
@@ -86,19 +93,17 @@ app.get("/price", async (req, res) => {
 
     const serviceData = data[service];
 
-    // ❌ if service not found
     if (!serviceData || Object.keys(serviceData).length === 0) {
       return res.json({ price: 0 });
     }
 
-    // ✅ get first operator safely
-    const firstOperator = Object.values(serviceData)[0];
+    const first = Object.values(serviceData)[0];
 
-    if (!firstOperator || !firstOperator.cost) {
+    if (!first || !first.cost) {
       return res.json({ price: 0 });
     }
 
-    const costUSD = firstOperator.cost;
+    const costUSD = first.cost;
 
     const rate = 1500;
     const costNGN = costUSD * rate;
@@ -131,11 +136,7 @@ app.get("/price", async (req, res) => {
 });
 
 
-// 💰 GET PRICE (FINAL FIXED)
-
-
-
-// 🚀 PORT (RENDER SAFE)
+// 🚀 PORT
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
