@@ -5,7 +5,11 @@ const cors = require("cors");
 const app = express();
 app.use(cors());
 
-// 🌍 COUNTRIES (TOP FIRST — FIXED)
+// 🔐 YOUR 5SIM API KEY
+const API_KEY = "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4MDc0NzI3MjQsImlhdCI6MTc3NTkzNjcyNCwicmF5IjoiMjA4NWEyOGIxOWU0OTFlNWYzNzQzM2M3ODRiMmJlNGMiLCJzdWIiOjM5NjI3Nzd9.IxRiwmZLIOZ1fxsb97IFFXyXdDyHsbM1ALeOQ6qNmtyvqK2g6_WHecuPqHLknlwAzCiSzHnEfhqPGZYLX2MnmP0RAjV3f5U9v79GyRLFpGfoXLP-wvNKsPzN_9-52M4xo7nyI6vkNu65qgLOZNXAHvza90GELhboy2p-I3lNvJN3GCQ2rAwz7CoWtq3-pC02JQf5D_f9g_m-5jiPBM5GB-56rnCk-C6zSdNzyTBAnTjdYswV7kGnvteiUjqwBI9XCrbipW1INT5oLdLpIlmNhDWcqH3BV_cI7VIwvkBIHEhWdXMZD5y4JMHWo8G62Nlqt9XyS6G-DansCAdDKmLwqA";
+
+
+// 🌍 COUNTRIES (TOP FIRST)
 app.get("/countries", async (req, res) => {
   try {
     const r = await fetch("https://5sim.net/v1/guest/countries");
@@ -32,7 +36,8 @@ app.get("/countries", async (req, res) => {
   }
 });
 
-// 📱 SERVICES (WORKING)
+
+// 📱 SERVICES
 app.get("/services", async (req, res) => {
   try {
     const country = req.query.country || "usa";
@@ -72,7 +77,8 @@ app.get("/services", async (req, res) => {
   }
 });
 
-// 💰 PRICE (FINAL BUSINESS LOGIC)
+
+// 💰 PRICE (YOUR LOGIC)
 app.get("/price", async (req, res) => {
   try {
     const country = req.query.country;
@@ -102,11 +108,9 @@ app.get("/price", async (req, res) => {
 
     const costUSD = first.cost;
 
-    // 💱 YOUR RATE
     const rate = 1500;
     const costNGN = costUSD * rate;
 
-    // 🔥 PROFIT SYSTEM
     let profit = 3000;
 
     const highTier = ["usa", "england", "canada", "australia"];
@@ -117,21 +121,14 @@ app.get("/price", async (req, res) => {
       "ivorycoast", "ethiopia"
     ];
 
-    // 🇮🇹 SPECIAL CASE (ITALY WHATSAPP)
     if (country === "italy" && service.includes("whatsapp")) {
       profit = 5000;
     }
-    // 🌍 HIGH TIER
     else if (highTier.includes(country)) {
       profit = 3500;
     }
-    // 🌍 AFRICA
     else if (africa.includes(country)) {
       profit = 2500;
-    }
-    // 🌎 OTHERS
-    else {
-      profit = 3000;
     }
 
     const finalPrice = Math.ceil(costNGN + profit);
@@ -144,7 +141,58 @@ app.get("/price", async (req, res) => {
   }
 });
 
-// 🚀 SERVER MUST BE LAST
+
+// 🔥 BUY NUMBER (REAL)
+app.get("/buy", async (req, res) => {
+  try {
+    const { country, service } = req.query;
+
+    const r = await fetch(
+      `https://5sim.net/v1/user/buy/activation/${country}/any/${service}`,
+      {
+        headers: {
+          Authorization: `Bearer ${API_KEY}`
+        }
+      }
+    );
+
+    const data = await r.json();
+
+    res.json(data);
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Failed to buy number" });
+  }
+});
+
+
+// 📩 CHECK OTP
+app.get("/check", async (req, res) => {
+  try {
+    const { id } = req.query;
+
+    const r = await fetch(
+      `https://5sim.net/v1/user/check/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${API_KEY}`
+        }
+      }
+    );
+
+    const data = await r.json();
+
+    res.json(data);
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Failed to check SMS" });
+  }
+});
+
+
+// 🚀 SERVER
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
