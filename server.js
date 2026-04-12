@@ -27,16 +27,30 @@ app.get("/services", async (req, res) => {
 
     const data = await r.json();
 
-    const popular = [
-      "whatsapp","telegram","facebook","instagram",
-      "twitter","tiktok","twitch","google","googlevoice","youtube"
+    // 🔥 FIX: access inner object
+    const servicesObj = data[country] || {};
+
+    const priority = [
+      "whatsapp",
+      "telegram",
+      "facebook",
+      "instagram",
+      "twitter",
+      "tiktok",
+      "twitch",
+      "google",
+      "googlevoice",
+      "youtube"
     ];
 
-    const services = Object.keys(data).filter(s =>
-      popular.some(p => s.includes(p))
-    );
+    const all = Object.keys(servicesObj);
 
-    res.json(services);
+    const sorted = [
+      ...priority.filter(p => all.includes(p)),
+      ...all.filter(s => !priority.includes(s))
+    ];
+
+    res.json(sorted);
 
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch services" });
