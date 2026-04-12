@@ -21,8 +21,8 @@ app.get("/countries", async (req, res) => {
     const all = Object.keys(data);
 
     const sorted = [
-      ...priority.filter(c => all.includes(c)),   // top countries
-      ...all.filter(c => !priority.includes(c))   // others
+      ...priority.filter(c => all.includes(c)),
+      ...all.filter(c => !priority.includes(c))
     ];
 
     res.json(sorted);
@@ -32,7 +32,7 @@ app.get("/countries", async (req, res) => {
   }
 });
 
-// 📱 SERVICES (DO NOT TOUCH — YOUR WORKING VERSION)
+// 📱 SERVICES (WORKING)
 app.get("/services", async (req, res) => {
   try {
     const country = req.query.country || "usa";
@@ -72,6 +72,54 @@ app.get("/services", async (req, res) => {
   }
 });
 
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
+// 💰 PRICE (NOW IN CORRECT POSITION)
+app.get("/price", async (req, res) => {
+  try {
+    const country = req.query.country;
+    const service = req.query.service;
+
+    if (!country || !service) {
+      return res.json({ price: 0 });
+    }
+
+    const r = await fetch(
+      `https://5sim.net/v1/guest/prices?country=${country}`
+    );
+
+    const data = await r.json();
+
+    const serviceData = data[country]?.[service];
+
+    if (!serviceData) {
+      return res.json({ price: 0 });
+    }
+
+    const first = Object.values(serviceData)[0];
+
+    if (!first || !first.cost) {
+      return res.json({ price: 0 });
+    }
+
+    const costUSD = first.cost;
+
+    const rate = 1500;
+    const costNGN = costUSD * rate;
+
+    const profit = 3000;
+
+    const finalPrice = Math.ceil(costNGN + profit);
+
+    res.json({ price: finalPrice });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Failed to get price" });
+  }
+});
+
+// 🚀 SERVER MUST BE LAST
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log("Server running 🚀");
 });
