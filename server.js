@@ -44,14 +44,11 @@ app.get("/services", async (req, res) => {
 
     const data = await r.json();
 
-    // ✅ FILTER ONLY REAL SERVICES
-    const all = Object.keys(data).filter(service => {
-      const obj = data[service];
-      return (
-        typeof obj === "object" &&
-        Object.values(obj)[0]?.cost !== undefined
-      );
-    });
+    // ✅ JUST GET KEYS
+    let all = Object.keys(data);
+
+    // ❌ REMOVE WRONG ITEMS (numbers, weird keys)
+    all = all.filter(s => isNaN(s)); // remove "1688", etc
 
     const priority = [
       "whatsapp",
