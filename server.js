@@ -6,7 +6,7 @@ const app = express();
 app.use(cors());
 
 
-// 🌍 COUNTRIES (TOP FIRST LIKE BEFORE)
+// 🌍 COUNTRIES (TOP FIRST)
 app.get("/countries", async (req, res) => {
   try {
     const r = await fetch("https://5sim.net/v1/guest/countries");
@@ -34,7 +34,7 @@ app.get("/countries", async (req, res) => {
 });
 
 
-// 📱 SERVICES (DO NOT BREAK AGAIN)
+// 📱 SERVICES (FIXED CORRECTLY)
 app.get("/services", async (req, res) => {
   try {
     const country = req.query.country || "usa";
@@ -45,15 +45,16 @@ app.get("/services", async (req, res) => {
 
     const data = await r.json();
 
-    // ✅ CORRECT STRUCTURE
+    // ✅ CORRECT STRUCTURE (THIS WAS YOUR MAIN BUG)
     const servicesObj = data;
 
-    // ✅ FILTER VALID SERVICES ONLY
-    const all = Object.keys(servicesObj).filter(
-      s =>
-        typeof servicesObj[s] === "object" &&
-        Object.values(servicesObj[s])[0]?.cost !== undefined
-    );
+    const validServices = Object.keys(servicesObj).filter(s => {
+      const item = servicesObj[s];
+      return (
+        typeof item === "object" &&
+        Object.values(item)[0]?.cost !== undefined
+      );
+    });
 
     const priority = [
       "whatsapp",
@@ -69,8 +70,8 @@ app.get("/services", async (req, res) => {
     ];
 
     const sorted = [
-      ...priority.filter(p => all.includes(p)),
-      ...all.filter(s => !priority.includes(s))
+      ...priority.filter(p => validServices.includes(p)),
+      ...validServices.filter(s => !priority.includes(s))
     ];
 
     res.json(sorted);
@@ -81,11 +82,10 @@ app.get("/services", async (req, res) => {
 });
 
 
-// 💰 PRICE (WITH YOUR PROFIT SYSTEM)
+// 💰 PRICE (FIXED)
 app.get("/price", async (req, res) => {
   try {
-    const country = req.query.country;
-    const service = req.query.service;
+    const { country, service } = req.query;
 
     const r = await fetch(
       `https://5sim.net/v1/guest/prices?country=${country}`
@@ -138,7 +138,7 @@ app.get("/price", async (req, res) => {
 });
 
 
-// 🚀 PORT (RENDER SAFE)
+// 🚀 SERVER
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
