@@ -45,16 +45,15 @@ app.get("/services", async (req, res) => {
 
     const data = await r.json();
 
-    // ✅ CORRECT STRUCTURE (THIS WAS YOUR MAIN BUG)
-    const servicesObj = data;
+    // 🔥 REAL FIX — NO FILTER THAT BREAKS THINGS
+    const all = Object.keys(data);
 
-    const validServices = Object.keys(servicesObj).filter(s => {
-      const item = servicesObj[s];
-      return (
-        typeof item === "object" &&
-        Object.values(item)[0]?.cost !== undefined
-      );
-    });
+    // ✅ REMOVE ONLY CLEAR BAD KEYS
+    const clean = all.filter(s =>
+      !s.includes(" ") &&      // remove weird names
+      s.length < 20 &&         // remove long junk
+      s !== country            // remove country itself
+    );
 
     const priority = [
       "whatsapp",
@@ -70,13 +69,14 @@ app.get("/services", async (req, res) => {
     ];
 
     const sorted = [
-      ...priority.filter(p => validServices.includes(p)),
-      ...validServices.filter(s => !priority.includes(s))
+      ...priority.filter(p => clean.includes(p)),
+      ...clean.filter(s => !priority.includes(s))
     ];
 
     res.json(sorted);
 
   } catch (err) {
+    console.log(err);
     res.status(500).json({ error: "Failed to fetch services" });
   }
 });
