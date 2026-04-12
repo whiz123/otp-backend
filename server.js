@@ -17,7 +17,9 @@ app.post("/pay", async (req, res) => {
       {
         amount: 4000,
         currency: "NGN",
-        email: email,
+        customer: {
+          email: email
+        },
         reference: "ref_" + Date.now(),
         redirect_url: "https://otp-site.onrender.com"
       },
@@ -34,6 +36,7 @@ app.post("/pay", async (req, res) => {
     if (data.status && data.data.checkout_url) {
       res.json({ checkout_url: data.data.checkout_url });
     } else {
+      console.log(data);
       res.json({ error: "Payment failed" });
     }
 
