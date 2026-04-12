@@ -44,6 +44,9 @@ app.get("/services", async (req, res) => {
 
     const data = await r.json();
 
+    // 🔥 FIX: access inner object
+    const servicesObj = data[country] || {};
+
     const priority = [
       "whatsapp",
       "telegram",
@@ -57,14 +60,11 @@ app.get("/services", async (req, res) => {
       "youtube"
     ];
 
-    // ✅ ONLY VALID SERVICES (REMOVE COUNTRY KEYS)
-    const all = Object.keys(data).filter(
-      key => typeof data[key] === "object"
-    );
+    const all = Object.keys(servicesObj);
 
     const sorted = [
-      ...priority.filter(p => all.some(s => s.includes(p))),
-      ...all.filter(s => !priority.some(p => s.includes(p)))
+      ...priority.filter(p => all.includes(p)),
+      ...all.filter(s => !priority.includes(s))
     ];
 
     res.json(sorted);
@@ -73,7 +73,6 @@ app.get("/services", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch services" });
   }
 });
-
 
 // 🚀 FIXED PORT FOR RENDER
 const PORT = process.env.PORT || 3000;
