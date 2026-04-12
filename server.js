@@ -1,11 +1,11 @@
-import express from "express";
-import fetch from "node-fetch";
-import cors from "cors";
+const express = require("express");
+const fetch = require("node-fetch");
+const cors = require("cors");
 
 const app = express();
 app.use(cors());
 
-// 🌍 GET COUNTRIES
+// 🌍 COUNTRIES
 app.get("/countries", async (req, res) => {
   try {
     const r = await fetch("https://5sim.net/v1/guest/countries");
@@ -16,7 +16,7 @@ app.get("/countries", async (req, res) => {
   }
 });
 
-// 📱 GET SERVICES
+// 📱 SERVICES
 app.get("/services", async (req, res) => {
   try {
     const country = req.query.country || "usa";
@@ -27,18 +27,9 @@ app.get("/services", async (req, res) => {
 
     const data = await r.json();
 
-    // 🔥 ONLY POPULAR SERVICES
     const popular = [
-      "whatsapp",
-      "telegram",
-      "facebook",
-      "instagram",
-      "twitter",
-      "tiktok",
-      "twitch",
-      "google",
-      "googlevoice",
-      "youtube"
+      "whatsapp","telegram","facebook","instagram",
+      "twitter","tiktok","twitch","google","googlevoice","youtube"
     ];
 
     const services = Object.keys(data).filter(s =>
