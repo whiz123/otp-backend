@@ -1,41 +1,39 @@
-const express = require('express');
-const app = express();
+app.post('/pay', async (req, res) => {
+  const { email } = req.body;
 
-app.use(express.json());
+  if (!email) {
+    return res.json({ error: 'Email required' });
+  }
 
-// TEST ROUTE
-app.get("/", (req, res) => {
-  res.send("Backend is running 🚀");
-});
-
-// PAY ROUTE
-app.post("/pay", async (req, res) => {
-  console.log("PAY ROUTE HIT");
+  const totalAmount = 4000; // ✅ fixed price for now
 
   try {
-    const { email } = req.body;
-    console.log("EMAIL:", email);
-
-    if (!email) {
-      return res.status(400).json({ error: "Email required" });
-    }
-
-    // fake payment link (for now)
-    const checkout_url = "https://paystack.com/pay/test-payment";
-
-    return res.json({
-      status: "success",
-      checkout_url: checkout_url
+    const response = await fetch("https://api.korapay.com/merchant/api/v1/charges/initialize", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + process.env.KORAPAY_SECRET_KEY
+      },
+      body: JSON.stringify({
+        amount: totalAmount,
+        currency: "NGN",
+        email: email,
+        reference: "ref_" + Date.now(),
+        redirect_url: "https://otp-site.onrender.com"
+      })
     });
 
-  } catch (error) {
-    console.log("ERROR:", error);
-    res.status(500).json({ error: "Server error" });
+    const data = await response.json();
+
+    if (data.status && data.data.checkout_url) {
+      res.json({ checkout_url: data.data.checkout_url });
+    } else {
+      console.log(data);
+      res.json({ error: "Payment failed" });
+    }
+
+  } catch (err) {
+    console.log(err);
+    res.json({ error: "Server error" });
   }
-});
-
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
 });
