@@ -4,48 +4,39 @@ const axios = require("axios");
 const app = express();
 app.use(express.json());
 
-app.post("/pay", async (req, res) => {
-  const { email } = req.body;
+const API_KEY = "YOUR_5SIM_API_KEY"; // paste your key here
 
-  if (!email) {
-    return res.json({ error: "Email required" });
-  }
-
+// 🟢 GET SERVICES
+app.get("/services", async (req, res) => {
   try {
-    const response = await axios.post(
-      "https://api.korapay.com/merchant/api/v1/charges/initialize",
-      {
-        amount: 4000,
-        currency: "NGN",
-        customer: {
-          email: email
-        },
-        reference: "ref_" + Date.now(),
-        redirect_url: "https://otp-site.onrender.com"
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`,
-          "Content-Type": "application/json"
-        }
-      }
+    const response = await axios.get(
+      "https://5sim.net/v1/guest/products"
     );
 
     const data = response.data;
 
-    if (data.status && data.data.checkout_url) {
-      res.json({ checkout_url: data.data.checkout_url });
-    } else {
-      console.log(data);
-      res.json({ error: "Payment failed" });
-    }
+    const services = Object.keys(data);
 
+    res.json(services);
   } catch (err) {
-    console.log(err.response?.data || err.message);
-    res.json({ error: "Server error" });
+    console.log(err.message);
+    res.json({ error: "Failed to fetch services" });
+  }
+});
+
+// 🟢 GET COUNTRIES
+app.get("/countries", async (req, res) => {
+  try {
+    const response = await axios.get(
+      "https://5sim.net/v1/guest/countries"
+    );
+
+    res.json(Object.keys(response.data));
+  } catch (err) {
+    res.json({ error: "Failed to fetch countries" });
   }
 });
 
 app.listen(10000, () => {
-  console.log("Server running on port 10000");
+  console.log("Server running");
 });
