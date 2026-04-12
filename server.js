@@ -5,18 +5,34 @@ const cors = require("cors");
 const app = express();
 app.use(cors());
 
-// 🌍 COUNTRIES
+// 🌍 COUNTRIES (TOP FIRST — FIXED)
 app.get("/countries", async (req, res) => {
   try {
     const r = await fetch("https://5sim.net/v1/guest/countries");
     const data = await r.json();
-    res.json(Object.keys(data));
+
+    const priority = [
+      "usa", "england", "canada", "india",
+      "nigeria", "germany", "france",
+      "netherlands", "sweden", "brazil",
+      "spain", "italy", "turkey"
+    ];
+
+    const all = Object.keys(data);
+
+    const sorted = [
+      ...priority.filter(c => all.includes(c)),   // top countries
+      ...all.filter(c => !priority.includes(c))   // others
+    ];
+
+    res.json(sorted);
+
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch countries" });
   }
 });
 
-// 📱 SERVICES
+// 📱 SERVICES (DO NOT TOUCH — YOUR WORKING VERSION)
 app.get("/services", async (req, res) => {
   try {
     const country = req.query.country || "usa";
@@ -27,7 +43,6 @@ app.get("/services", async (req, res) => {
 
     const data = await r.json();
 
-    // 🔥 FIX: access inner object
     const servicesObj = data[country] || {};
 
     const priority = [
