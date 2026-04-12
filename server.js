@@ -5,28 +5,7 @@ const app = express();
 app.use(express.json());
 
 // ===============================
-// 🟢 GET SERVICES (WORKING FIX)
-// ===============================
-app.get("/services", async (req, res) => {
-  try {
-    const response = await axios.get(
-      "https://5sim.net/v1/guest/prices?country=nigeria"
-    );
-
-    const data = response.data;
-
-    const services = Object.keys(data);
-
-    res.json(services);
-
-  } catch (err) {
-    console.log(err.response?.data || err.message);
-    res.json({ error: "Failed to fetch services" });
-  }
-});
-
-// ===============================
-// 🟢 GET COUNTRIES
+// 🟢 GET ALL COUNTRIES
 // ===============================
 app.get("/countries", async (req, res) => {
   try {
@@ -39,8 +18,29 @@ app.get("/countries", async (req, res) => {
     res.json(countries);
 
   } catch (err) {
-    console.log(err.response?.data || err.message);
+    console.log(err.message);
     res.json({ error: "Failed to fetch countries" });
+  }
+});
+
+// ===============================
+// 🟢 GET SERVICES BY COUNTRY
+// ===============================
+app.get("/services", async (req, res) => {
+  try {
+    const country = req.query.country || "nigeria";
+
+    const response = await axios.get(
+      `https://5sim.net/v1/guest/prices?country=${country}`
+    );
+
+    const services = Object.keys(response.data);
+
+    res.json(services);
+
+  } catch (err) {
+    console.log(err.message);
+    res.json({ error: "Failed to fetch services" });
   }
 });
 
