@@ -1,11 +1,11 @@
 const express = require("express");
+const fetch = require("node-fetch");
 const cors = require("cors");
 
 const app = express();
 app.use(cors());
 
-
-// 🌍 GET COUNTRIES (TOP FIRST)
+// 🌍 GET COUNTRIES (SORTED + TOP FIRST)
 app.get("/countries", async (req, res) => {
   try {
     const r = await fetch("https://5sim.net/v1/guest/countries");
@@ -32,8 +32,7 @@ app.get("/countries", async (req, res) => {
   }
 });
 
-
-// 📱 GET SERVICES (FIXED — NO MORE COUNTRY BUG)
+// 📱 GET SERVICES (POPULAR FIRST)
 app.get("/services", async (req, res) => {
   try {
     const country = req.query.country || "usa";
@@ -43,12 +42,6 @@ app.get("/services", async (req, res) => {
     );
 
     const data = await r.json();
-
-    // ✅ JUST GET KEYS
-    let all = Object.keys(data);
-
-    // ❌ REMOVE WRONG ITEMS (numbers, weird keys)
-    all = all.filter(s => isNaN(s)); // remove "1688", etc
 
     const priority = [
       "whatsapp",
@@ -63,9 +56,11 @@ app.get("/services", async (req, res) => {
       "youtube"
     ];
 
+    const all = Object.keys(data);
+
     const sorted = [
-      ...priority.filter(p => all.includes(p)),
-      ...all.filter(s => !priority.includes(s))
+      ...priority.filter(p => all.some(s => s.includes(p))),
+      ...all.filter(s => !priority.some(p => s.includes(p)))
     ];
 
     res.json(sorted);
@@ -75,67 +70,6 @@ app.get("/services", async (req, res) => {
   }
 });
 
-
-// 💰 GET PRICE (KEEP AS IS)
-app.get("/price", async (req, res) => {
-  try {
-    const country = req.query.country;
-    const service = req.query.service;
-
-    const r = await fetch(
-      `https://5sim.net/v1/guest/prices?country=${country}`
-    );
-
-    const data = await r.json();
-
-    const serviceData = data[service];
-
-    if (!serviceData || Object.keys(serviceData).length === 0) {
-      return res.json({ price: 0 });
-    }
-
-    const first = Object.values(serviceData)[0];
-
-    if (!first || !first.cost) {
-      return res.json({ price: 0 });
-    }
-
-    const costUSD = first.cost;
-
-    const rate = 1500;
-    const costNGN = costUSD * rate;
-
-    // 💰 PROFIT SYSTEM
-    let profit = 3000;
-
-    const highTier = ["usa", "england", "canada"];
-
-    const africa = [
-      "nigeria", "ghana", "kenya", "southafrica",
-      "uganda", "tanzania", "cameroon", "senegal",
-      "ivorycoast", "ethiopia"
-    ];
-
-    if (highTier.includes(country)) {
-      profit = 3500;
-    } else if (africa.includes(country)) {
-      profit = 2500;
-    }
-
-    const finalPrice = Math.ceil(costNGN + profit);
-
-    res.json({ price: finalPrice });
-
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Failed to get price" });
-  }
-});
-
-
-// 🚀 PORT
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log("Server running 🚀");
+app.listen(3000, () => {
+  console.log("Server running on port 3000");
 });
