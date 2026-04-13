@@ -226,17 +226,16 @@ app.post("/create-payment", async (req, res) => {
   },
   callback_url: `https://otp-site.onrender.com/success.html?country=${country}&service=${service}`
 })
-      })
-    });
+});
 
-    const data = await response.json();
+const data = await response.json();
 
-    res.json(data);
+res.json(data);
 
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Payment failed" });
-  }
+} catch (err) {
+  console.log(err);
+  res.status(500).json({ error: "Payment failed" });
+}
 });
 
 // 🚀 SERVER
