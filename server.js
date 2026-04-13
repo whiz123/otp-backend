@@ -224,6 +224,10 @@ app.post("/create-payment", async (req, res) => {
   customer: {
     email: email
   },
+
+  redirect_url: "https://otp-site.onrender.com/success.html"
+
+})
   
 })
 });
