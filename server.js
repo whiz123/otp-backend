@@ -145,9 +145,11 @@ app.get("/price", async (req, res) => {
 
 
 // 🔥 BUY NUMBER (REAL)
-app.get("/buy", async (req, res) => {
+app.post("/buy-number", async (req, res) => {
   try {
-    const { country, service } = req.query;
+    const { country, service } = req.body;
+
+    console.log("Incoming:", country, service);
 
     const r = await fetch(
       `https://5sim.net/v1/user/buy/activation/${country}/any/${service}`,
@@ -158,19 +160,10 @@ app.get("/buy", async (req, res) => {
       }
     );
 
-    const text = await r.text();
+    const data = await r.json();
+    console.log("5sim response:", data);
 
-console.log("RAW 5SIM RESPONSE:", text);
-
-let data;
-
-try {
-  data = JSON.parse(text);
-} catch {
-  data = { error: text };
-}
-
-res.json(data);
+    res.json(data);
 
   } catch (err) {
     console.log(err);
