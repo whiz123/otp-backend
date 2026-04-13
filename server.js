@@ -148,7 +148,7 @@ app.get("/buy", async (req, res) => {
     const { country, service } = req.query;
 
     const r = await fetch(
-      `https://5sim.net/v1/user/buy/activation/any/${service}/${country}`,
+      `https://5sim.net/v1/user/buy/activation/${country}/any/${service}`,
       {
         headers: {
           Authorization: `Bearer ${API_KEY}`
@@ -157,6 +157,8 @@ app.get("/buy", async (req, res) => {
     );
 
     const data = await r.json();
+
+    console.log("BUY RESPONSE:", data); // 🔥 VERY IMPORTANT
 
     res.json(data);
 
