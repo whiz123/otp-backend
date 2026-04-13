@@ -212,19 +212,20 @@ app.post("/create-payment", async (req, res) => {
     const reference = "OTP_" + Date.now();
 
     const response = await fetch("https://api.korapay.com/merchant/api/v1/charges/initialize", {
-  method: "POST",
-  headers: {
-    "Authorization": `Bearer ${process.env.KORAPAY_SECRET}`,
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-  amount: amount * 100,
-  currency: "NGN",
-  reference: reference,
-  customer: {
-    email: email
-  }
-})
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.KORAPAY_SECRET}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        amount: amount * 100,
+        currency: "NGN",
+        reference: reference,
+        customer: {
+          email: email
+        }
+      })
+    });
 
     const data = await response.json();
 
@@ -235,7 +236,6 @@ app.post("/create-payment", async (req, res) => {
     res.status(500).json({ error: "Payment failed" });
   }
 });
-
 
 // 🚀 SERVER
 const PORT = process.env.PORT || 3000;
