@@ -218,12 +218,14 @@ app.post("/create-payment", async (req, res) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        amount: amount,
-        currency: "NGN",
-        reference: reference,
-        customer: {
-          email: email
-        }
+  amount: amount,
+  currency: "NGN",
+  reference: reference,
+  customer: {
+    email: email
+  },
+  callback_url: `https://otp-site.onrender.com/success.html?country=${country}&service=${service}`
+})
       })
     });
 
