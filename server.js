@@ -218,13 +218,13 @@ app.post("/create-payment", async (req, res) => {
     "Content-Type": "application/json"
   },
   body: JSON.stringify({
-    amount: amount * 100,
-    currency: "NGN",
-    email: email,
-    reference: reference,
-    callback_url: "https://otp-site.onrender.com/success"
-  })
-});
+  amount: amount * 100,
+  currency: "NGN",
+  reference: reference,
+  customer: {
+    email: email
+  }
+})
 
     const data = await response.json();
 
