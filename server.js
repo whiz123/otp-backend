@@ -3,7 +3,9 @@ const fetch = require("node-fetch");
 const cors = require("cors");
 
 const app = express();
+
 app.use(cors());
+app.use(express.json()); // ✅ ADD THIS HERE
 
 // 🔐 YOUR 5SIM API KEY
 const API_KEY = "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4MDc0NzI3MjQsImlhdCI6MTc3NTkzNjcyNCwicmF5IjoiMjA4NWEyOGIxOWU0OTFlNWYzNzQzM2M3ODRiMmJlNGMiLCJzdWIiOjM5NjI3Nzd9.IxRiwmZLIOZ1fxsb97IFFXyXdDyHsbM1ALeOQ6qNmtyvqK2g6_WHecuPqHLknlwAzCiSzHnEfhqPGZYLX2MnmP0RAjV3f5U9v79GyRLFpGfoXLP-wvNKsPzN_9-52M4xo7nyI6vkNu65qgLOZNXAHvza90GELhboy2p-I3lNvJN3GCQ2rAwz7CoWtq3-pC02JQf5D_f9g_m-5jiPBM5GB-56rnCk-C6zSdNzyTBAnTjdYswV7kGnvteiUjqwBI9XCrbipW1INT5oLdLpIlmNhDWcqH3BV_cI7VIwvkBIHEhWdXMZD5y4JMHWo8G62Nlqt9XyS6G-DansCAdDKmLwqA";
@@ -198,6 +200,39 @@ app.get("/check", async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Failed to check SMS" });
+  }
+});
+
+
+// 🔥👇 PASTE YOUR KORAPAY CODE HERE
+app.post("/create-payment", async (req, res) => {
+  try {
+    const { email, amount, country, service } = req.body;
+
+    const reference = "OTP_" + Date.now();
+
+    const response = await fetch("https://api.korapay.com/merchant/api/v1/charges/initialize", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer "Authorization": `Bearer ${process.env.KORAPAY_SECRET}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        amount: amount * 100,
+        currency: "NGN",
+        email: email,
+        reference: reference,
+        callback_url: "https://otp-site.onrender.com/success"
+      })
+    });
+
+    const data = await response.json();
+
+    res.json(data);
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Payment failed" });
   }
 });
 
