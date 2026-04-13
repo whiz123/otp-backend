@@ -218,7 +218,7 @@ app.post("/create-payment", async (req, res) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        amount: amount * 100,
+        amount: amount,
         currency: "NGN",
         reference: reference,
         customer: {
