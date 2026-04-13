@@ -212,19 +212,19 @@ app.post("/create-payment", async (req, res) => {
     const reference = "OTP_" + Date.now();
 
     const response = await fetch("https://api.korapay.com/merchant/api/v1/charges/initialize", {
-      method: "POST",
-      headers: {
-        "Authorization": "Bearer "Authorization": `Bearer ${process.env.KORAPAY_SECRET}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        amount: amount * 100,
-        currency: "NGN",
-        email: email,
-        reference: reference,
-        callback_url: "https://otp-site.onrender.com/success"
-      })
-    });
+  method: "POST",
+  headers: {
+    "Authorization": `Bearer ${process.env.KORAPAY_SECRET_KEY}`,
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    amount: amount * 100,
+    currency: "NGN",
+    email: email,
+    reference: reference,
+    callback_url: "https://otp-site.onrender.com/success"
+  })
+});
 
     const data = await response.json();
 
