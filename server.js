@@ -156,11 +156,19 @@ app.get("/buy", async (req, res) => {
       }
     );
 
-    const data = await r.json();
+    const text = await r.text();
 
-    console.log("BUY RESPONSE:", data); // 🔥 VERY IMPORTANT
+console.log("RAW 5SIM RESPONSE:", text);
 
-    res.json(data);
+let data;
+
+try {
+  data = JSON.parse(text);
+} catch {
+  data = { error: text };
+}
+
+res.json(data);
 
   } catch (err) {
     console.log(err);
