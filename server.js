@@ -183,10 +183,10 @@ if (usedRefs.has(reference)) {
       }
     );
 
-    const data = await r.json();
-    console.log("5sim response:", data);
+    const result = await r.json();
+    console.log("5sim response:", result);
 
-    res.json(data);
+    res.json(result);
 
   } catch (err) {
     console.log(err);
