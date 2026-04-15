@@ -244,13 +244,16 @@ app.post("/create-payment", async (req, res) => {
 })
 });
 
- app.post("/fund-init", async (req, res) => {
+ app.post("/fund-wallet", async (req, res) => {
   try {
     const { email, amount } = req.body;
 
-    // ✅ LIMIT (VERY IMPORTANT FOR YOUR BUSINESS)
+    // ✅ LIMIT (GOOD you added this)
     if (amount < 1000 || amount > 100000) {
-      return res.json({ status: false, message: "Amount must be between ₦1,000 and ₦100,000" });
+      return res.json({
+        status: false,
+        message: "Amount must be between ₦1,000 and ₦100,000"
+      });
     }
 
     const reference = "FUND_" + Date.now();
@@ -262,13 +265,25 @@ app.post("/create-payment", async (req, res) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        amount,
+        amount: amount,
         currency: "NGN",
-        reference,
-        customer: { email },
-        redirect_url: `https://otp-site.onrender.com/success.html?email=${email}&amount=${amount}&ref=${reference}`
+        reference: reference,
+        customer: {
+          email: email
+        },
+        redirect_url: "https://otp-site.onrender.com/success.html?type=fund"
       })
     });
+
+    const data = await response.json();
+
+    return res.json(data);
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Funding failed" });
+  }
+});
 
     const data = await response.json();
 
