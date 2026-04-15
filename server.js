@@ -244,6 +244,42 @@ app.post("/create-payment", async (req, res) => {
 })
 });
 
+ app.post("/fund-init", async (req, res) => {
+  try {
+    const { email, amount } = req.body;
+
+    // ✅ LIMIT (VERY IMPORTANT FOR YOUR BUSINESS)
+    if (amount < 1000 || amount > 100000) {
+      return res.json({ status: false, message: "Amount must be between ₦1,000 and ₦100,000" });
+    }
+
+    const reference = "FUND_" + Date.now();
+
+    const response = await fetch("https://api.korapay.com/merchant/api/v1/charges/initialize", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.KORAPAY_SECRET}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        amount,
+        currency: "NGN",
+        reference,
+        customer: { email },
+        redirect_url: `https://otp-site.onrender.com/success.html?email=${email}&amount=${amount}&ref=${reference}`
+      })
+    });
+
+    const data = await response.json();
+
+    res.json(data);
+
+  } catch (err) {
+    console.log(err);
+    res.json({ status: false });
+  }
+});
+    
 const data = await response.json();
 
 res.json(data);
