@@ -322,15 +322,33 @@ app.get("/verify", async (req, res) => {
 
     const data = await verify.json();
 
+    console.log("VERIFY RESPONSE:", data);
+
     if (data.status === true && data.data.status === "success") {
-      return res.json({ success: true });
-    } else {
-      return res.json({ success: false });
-    }
+
+  let balance = Number(global.balance || 0);
+  balance += Number(data.data.amount);
+
+  global.balance = balance;
+
+  return res.json({
+    success: true,
+    balance: global.balance
+  });
+
+} else {
+  return res.json({ success: false });
+}
 
   } catch (err) {
     return res.json({ success: false });
   }
+});
+
+app.get("/balance", (req, res) => {
+  return res.json({
+    balance: global.balance || 0
+  });
 });
 
 // 🚀 SERVER
