@@ -2,6 +2,12 @@ const express = require("express");
 const fetch = require("node-fetch");
 const cors = require("cors");
 
+const mongoose = require("mongoose");
+
+mongoose.connect("mongodb+srv://whizjoy123:Minimumi12%40@cluster0.qe8c0df.mongodb.net/otp?retryWrites=true&w=majority")
+.then(() => console.log("MongoDB connected ✅"))
+.catch(err => console.log(err));
+
 const app = express();
 
 app.use(cors());
@@ -322,33 +328,15 @@ app.get("/verify", async (req, res) => {
 
     const data = await verify.json();
 
-    console.log("VERIFY RESPONSE:", data);
-
     if (data.status === true && data.data.status === "success") {
-
-  let balance = Number(global.balance || 0);
-  balance += Number(data.data.amount);
-
-  global.balance = balance;
-
-  return res.json({
-    success: true,
-    balance: global.balance
-  });
-
-} else {
-  return res.json({ success: false });
-}
+      return res.json({ success: true });
+    } else {
+      return res.json({ success: false });
+    }
 
   } catch (err) {
     return res.json({ success: false });
   }
-});
-
-app.get("/balance", (req, res) => {
-  return res.json({
-    balance: global.balance || 0
-  });
 });
 
 // 🚀 SERVER
