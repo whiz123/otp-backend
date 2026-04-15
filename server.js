@@ -245,7 +245,6 @@ app.post("/create-payment", async (req, res) => {
 });
 
  app.post("/fund-wallet", async (req, res) => {
-  console.log("FUND WALLET HIT:", req.body); 
   try {
     const { email, amount } = req.body;
 
@@ -280,8 +279,6 @@ app.post("/create-payment", async (req, res) => {
     });
 
     const data = await response.json();
-
-    console.log("KORAPAY RESPONSE:", data);
 
     return res.json(data);
 
