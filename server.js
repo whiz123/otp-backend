@@ -2,6 +2,12 @@ const express = require("express");
 const fetch = require("node-fetch");
 const cors = require("cors");
 
+const mongoose = require("mongoose");
+
+mongoose.connect("mongodb+srv://whizjoy123:Minimumi12%40@cluster0.qe8c0df.mongodb.net/otp?retryWrites=true&w=majority")
+.then(() => console.log("MongoDB connected ✅"))
+.catch(err => console.log(err));
+
 const app = express();
 
 app.use(cors());
