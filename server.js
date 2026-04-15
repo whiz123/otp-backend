@@ -245,7 +245,6 @@ app.post("/create-payment", async (req, res) => {
 });
 
  app.post("/fund-wallet", async (req, res) => {
-  console.log("FUND WALLET HIT:", req.body); 
   try {
     const { email, amount } = req.body;
 
@@ -280,8 +279,6 @@ app.post("/create-payment", async (req, res) => {
     });
 
     const data = await response.json();
-
-    console.log("KORAPAY RESPONSE:", data);
 
     return res.json(data);
 
@@ -322,33 +319,15 @@ app.get("/verify", async (req, res) => {
 
     const data = await verify.json();
 
-    console.log("VERIFY RESPONSE:", data);
-
     if (data.status === true && data.data.status === "success") {
-
-  let balance = Number(global.balance || 0);
-  balance += Number(data.data.amount);
-
-  global.balance = balance;
-
-  return res.json({
-    success: true,
-    balance: global.balance
-  });
-
-} else {
-  return res.json({ success: false });
-}
+      return res.json({ success: true });
+    } else {
+      return res.json({ success: false });
+    }
 
   } catch (err) {
     return res.json({ success: false });
   }
-});
-
-app.get("/balance", (req, res) => {
-  return res.json({
-    balance: global.balance || 0
-  });
 });
 
 // 🚀 SERVER
