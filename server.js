@@ -248,7 +248,10 @@ app.post("/create-payment", async (req, res) => {
   try {
     const { email, amount } = req.body;
 
-    // ✅ LIMIT (GOOD you added this)
+    if (!email || !amount) {
+      return res.json({ status: false, message: "Missing email or amount" });
+    }
+
     if (amount < 1000 || amount > 100000) {
       return res.json({
         status: false,
@@ -265,7 +268,7 @@ app.post("/create-payment", async (req, res) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        amount: amount,
+        amount: Number(amount),
         currency: "NGN",
         reference: reference,
         customer: {
@@ -280,20 +283,12 @@ app.post("/create-payment", async (req, res) => {
     return res.json(data);
 
   } catch (error) {
-    console.log(error);
+    console.log("FUND ERROR:", error);
     return res.status(500).json({ error: "Funding failed" });
   }
 });
 
-    const data = await response.json();
-
-    res.json(data);
-
-  } catch (err) {
-    console.log(err);
-    res.json({ status: false });
-  }
-});
+    
     
 const data = await response.json();
 
