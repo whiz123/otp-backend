@@ -4,7 +4,7 @@ const cors = require("cors");
 
 const mongoose = require("mongoose");
 
-mongoose.connect("mongodb+srv://whizjoy123:Minimumi12%40@cluster0.qe8c0df.mongodb.net/otp?retryWrites=true&w=majority")
+mongoose.connect("mongodb+srv://whizjoy123:Newpass123%40%23@cluster0.qe8c0df.mongodb.net/otp?retryWrites=true&w=majority")
 .then(() => console.log("MongoDB connected ✅"))
 .catch(err => console.log(err));
 
