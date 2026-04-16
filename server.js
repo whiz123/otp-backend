@@ -312,27 +312,27 @@ app.get("/verify", async (req, res) => {
   }
 
   try {
-    const verify = await fetch(
-      `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.KORAPAY_SECRET}`
-        }
+  const verify = await fetch(
+    `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.KORAPAY_SECRET}`
       }
-    );
-
-    const data = await verify.json();
-
-    if (data.status === true && data.data.status === "success") {
-      return res.json({ success: true });
-    } else {
-      return res.json({ success: false });
     }
+  );
 
-  } catch (err) {
+  const data = await verify.json();
+
+  if (data.status === true && data.data.status === "success") {
+    return res.json({ success: true });
+  } else {
     return res.json({ success: false });
   }
-});
+
+} catch (err) {
+  console.log(err);
+  return res.json({ success: false });
+}
 
 // 🚀 SERVER
 const PORT = process.env.PORT || 3000;
