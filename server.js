@@ -245,22 +245,18 @@ app.post("/create-payment", async (req, res) => {
 });
 
  app.post("/fund-wallet", async (req, res) => {
-  console.log("FUND WALLET HIT:", req.body);
-
+  console.log("FUND WALLET HIT:", req.body); 
   try {
     const { email, amount } = req.body;
 
-    // ✅ Check email + amount
     if (!email || !amount) {
-      return res.json({ error: "Missing email or amount" });
+      return res.json({ status: false, message: "Missing email or amount" });
     }
 
-    const amt = Number(amount);
-
-    // ✅ Minimum & Maximum check
-    if (amt < 1000 || amt > 100000) {
+    if (amount < 1000 || amount > 100000) {
       return res.json({
-        error: "Amount must be between ₦1,000 and ₦100,000"
+        status: false,
+        message: "Amount must be between ₦1,000 and ₦100,000"
       });
     }
 
@@ -269,17 +265,17 @@ app.post("/create-payment", async (req, res) => {
     const response = await fetch("https://api.korapay.com/merchant/api/v1/charges/initialize", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.KORAPAY_SECRET}`,
+        "Authorization": `Bearer ${process.env.KORAPAY_SECRET}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        amount: amt,
+        amount: Number(amount),
         currency: "NGN",
         reference: reference,
         customer: {
           email: email
         },
-        redirect_url: "https://otp-site.onrender.com/success.html?type=fund&ref=" + reference
+        redirect_url: "https://otp-site.onrender.com/success.html?type=fund"
       })
     });
 
@@ -287,21 +283,24 @@ app.post("/create-payment", async (req, res) => {
 
     console.log("KORAPAY RESPONSE:", data);
 
-    if (!data || !data.data || !data.data.checkout_url) {
-      return res.json({
-        error: "No checkout url",
-        full: data
-      });
-    }
+    return res.json(data);
 
-    return res.json({
-      checkout_url: data.data.checkout_url
-    });
-
-  } catch (err) {
-    console.log("ERROR:", err);
-    return res.json({ error: "server error" });
+  } catch (error) {
+    console.log("FUND ERROR:", error);
+    return res.status(500).json({ error: "Funding failed" });
   }
+});
+
+    
+    
+const data = await response.json();
+
+res.json(data);
+
+} catch (err) {
+  console.log(err);
+  res.status(500).json({ error: "Payment failed" });
+}
 });
 
 app.get("/verify", async (req, res) => {
@@ -312,27 +311,27 @@ app.get("/verify", async (req, res) => {
   }
 
   try {
-  const verify = await fetch(
-    `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.KORAPAY_SECRET}`
+    const verify = await fetch(
+      `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.KORAPAY_SECRET}`
+        }
       }
+    );
+
+    const data = await verify.json();
+
+    if (data.status === true && data.data.status === "success") {
+      return res.json({ success: true });
+    } else {
+      return res.json({ success: false });
     }
-  );
 
-  const data = await verify.json();
-
-  if (data.status === true && data.data.status === "success") {
-    return res.json({ success: true });
-  } else {
+  } catch (err) {
     return res.json({ success: false });
   }
-
-} catch (err) {
-  console.log(err);
-  return res.json({ success: false });
-}
+});
 
 // 🚀 SERVER
 const PORT = process.env.PORT || 3000;
