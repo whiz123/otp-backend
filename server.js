@@ -303,14 +303,14 @@ res.json(data);
 }
 });
 
-app.get("/verify", async (req, res) => {
-  const reference = req.query.reference;
-
-  if (!reference) {
-    return res.json({ success: false });
-  }
-
+app.get("/verify-payment", async (req, res) => {
   try {
+    const { reference } = req.query;
+
+    if (!reference) {
+      return res.json({ success: false });
+    }
+
     const verify = await fetch(
       `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
       {
@@ -322,13 +322,20 @@ app.get("/verify", async (req, res) => {
 
     const data = await verify.json();
 
+    console.log("VERIFY:", data);
+
     if (data.status === true && data.data.status === "success") {
-      return res.json({ success: true });
+      return res.json({
+        success: true,
+        amount: data.data.amount,
+        email: data.data.customer.email
+      });
     } else {
       return res.json({ success: false });
     }
 
   } catch (err) {
+    console.log(err);
     return res.json({ success: false });
   }
 });
