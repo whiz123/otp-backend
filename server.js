@@ -163,6 +163,10 @@ app.post("/fund-wallet", async (req, res) => {
   try {
     const { email, amount } = req.body;
 
+    if (!email || !amount) {
+      return res.json({ status: false });
+    }
+
     const reference = "FUND_" + Date.now();
 
     const response = await fetch("https://api.korapay.com/merchant/api/v1/charges/initialize", {
@@ -174,47 +178,42 @@ app.post("/fund-wallet", async (req, res) => {
       body: JSON.stringify({
         amount: Number(amount),
         currency: "NGN",
-        reference,
+        reference: reference,
         customer: { email },
         redirect_url: "https://otp-site.onrender.com/success.html?type=fund"
       })
     });
 
-    res.json(await response.json());
+    const data = await response.json();
+
+    // 🔥 VERY IMPORTANT FIX
+    return res.json({
+      checkout_url: data?.data?.checkout_url
+    });
 
   } catch (err) {
     console.log(err);
-    res.status(500).json({ error: "Funding failed" });
+    return res.json({ status: false });
   }
 });
 
-
 // ✅ VERIFY PAYMENT (FINAL FIX)
-app.post("/verify-payment", async (req, res) => {
+app.get("/verify", async (req, res) => {
   try {
-    const { reference } = req.body;
+    const reference = req.query.reference;
 
-    if (usedRefs.has(reference)) {
-      return res.json({ success: false });
-    }
-
-    const verify = await fetch(
-      `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.KORAPAY_SECRET}`
-        }
+    const verify = await fetch(`https://api.korapay.com/merchant/api/v1/charges/${reference}`, {
+      headers: {
+        Authorization: `Bearer ${process.env.KORAPAY_SECRET}`
       }
-    );
+    });
 
     const data = await verify.json();
 
-    if (data.status && data.data.status === "success") {
-
-      usedRefs.add(reference);
+    if (data.status === true && data.data.status === "success") {
 
       const email = data.data.customer.email;
-      const amount = data.data.amount;
+      const amountPaid = data.data.amount;
 
       global.users = global.users || {};
 
@@ -222,9 +221,11 @@ app.post("/verify-payment", async (req, res) => {
         global.users[email] = { balance: 0 };
       }
 
-      global.users[email].balance += amount;
-
-      console.log("FUNDED:", email, amount);
+      // 🔒 prevent duplicate funding
+      if (!usedRefs.has(reference)) {
+        global.users[email].balance += amountPaid;
+        usedRefs.add(reference);
+      }
 
       return res.json({ success: true });
     }
@@ -236,7 +237,6 @@ app.post("/verify-payment", async (req, res) => {
     res.json({ success: false });
   }
 });
-
 
 // 🚀 SERVER
 const PORT = process.env.PORT || 3000;
