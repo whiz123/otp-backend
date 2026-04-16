@@ -244,8 +244,9 @@ app.post("/create-payment", async (req, res) => {
 })
 });
 
- app.post("/fund-wallet", async (req, res) => {
-  console.log("FUND WALLET HIT:", req.body); 
+app.post("/fund-wallet", async (req, res) => {
+  console.log("FUND WALLET HIT:", req.body);
+
   try {
     const { email, amount } = req.body;
 
@@ -265,7 +266,7 @@ app.post("/create-payment", async (req, res) => {
     const response = await fetch("https://api.korapay.com/merchant/api/v1/charges/initialize", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.KORAPAY_SECRET}`,
+        Authorization: `Bearer ${process.env.KORAPAY_SECRET}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -283,25 +284,19 @@ app.post("/create-payment", async (req, res) => {
 
     console.log("KORAPAY RESPONSE:", data);
 
-    return res.json(data);
+    if (!data || !data.data || !data.data.checkout_url) {
+      return res.json({ error: "No checkout url", full: data });
+    }
 
-  } catch (error) {
-    console.log("FUND ERROR:", error);
-    return res.status(500).json({ error: "Funding failed" });
+    return res.json({
+      checkout_url: data.data.checkout_url
+    });
+
+  } catch (err) {
+    console.log("ERROR:", err);
+    return res.json({ error: "server error" });
   }
-});
-
-    
-    
-const data = await response.json();
-
-res.json(data);
-
-} catch (err) {
-  console.log(err);
-  res.status(500).json({ error: "Payment failed" });
-}
-});
+}); 
 
 app.get("/verify-payment", async (req, res) => {
   try {
