@@ -316,36 +316,34 @@ app.get("/verify", async (req, res) => {
   }
 
   try {
-    const verify = await fetch(
-      `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.KORAPAY_SECRET}`
-        }
-      }
-    );
 
-    const data = await verify.json();
+  const verify = await fetch(...);
 
-if (data.status === true && data.data.status === "success") {
+  const data = await verify.json();
 
-  // 🔥 ADD TO WALLET AFTER SUCCESS
-  const email = data.data.customer.email;
-  const amountPaid = data.data.amount;
+  if (data.status === true && data.data.status === "success") {
 
-  global.users = global.users || {};
+    const email = data.data.customer.email;
+    const amountPaid = data.data.amount;
 
-  if (!global.users[email]) {
-    global.users[email] = { balance: 0 };
+    global.users = global.users || {};
+
+    if (!global.users[email]) {
+      global.users[email] = { balance: 0 };
+    }
+
+    global.users[email].balance += amountPaid;
+
+    console.log("Wallet funded:", email, global.users[email].balance);
+
+    return res.json({ success: true });
+
+  } else {
+    return res.json({ success: false });
   }
 
-  global.users[email].balance += amountPaid;
-
-  console.log("Wallet funded:", email, global.users[email].balance);
-
-  return res.json({ success: true });
-
-} else {
+} catch (err) {
+  console.log(err);
   return res.json({ success: false });
 }
     
