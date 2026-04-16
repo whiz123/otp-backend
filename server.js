@@ -127,7 +127,7 @@ app.get("/price", async (req, res) => {
       profit = 3,500;
     }
     else if (highTier.includes(country)) {
-      profit = 3,000;
+      profit = 3,500;
     }
     else if (africa.includes(country)) {
       profit = 2,000;
