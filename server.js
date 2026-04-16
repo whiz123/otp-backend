@@ -149,36 +149,31 @@ app.post("/buy-number", async (req, res) => {
   try {
     const { country, service, reference } = req.body;
     console.log("Incoming:", country, service);
-
-    // 🔥 WALLET SYSTEM START
-
-const email = req.body.email; // must come from frontend
-
-// ⚠️ Temporary simple storage (we improve later)
-global.users = global.users || {};
-
-if (!global.users[email]) {
-  global.users[email] = { balance: 0 };
+// ❌ NO REFERENCE
+if (!reference) {
+  return res.json({ error: "No payment reference" });
 }
 
-const user = global.users[email];
+// ❌ BLOCK REUSE
+if (usedRefs.has(reference)) {
+  return res.json({ error: "Already used" });
+}
 
-// 👉 USE YOUR EXISTING PRICE (IMPORTANT)
-const finalPrice = req.body.price; // OR your calculated price
-
-if (user.balance < finalPrice) {
-  return res.json({
-    error: "Insufficient balance, please fund wallet"
+  // 🔥 VERIFY PAYMENT
+  const verify = await fetch(`https://api.korapay.com/merchant/api/v1/charges/${reference}`, {
+    headers: {
+      Authorization: `Bearer ${process.env.KORAPAY_SECRET}`
+    }
   });
-}
 
-// deduct balance
-user.balance -= finalPrice;
+  const data = await verify.json();
 
-console.log("New balance:", user.balance);
+  if (!(data.status && data.data.status === "success")) {
+    return res.json({ error: "Payment not verified" });
+  }
 
-// 🔥 WALLET SYSTEM END
-    
+  // ✅ MARK USED
+  usedRefs.add(reference);
     const r = await fetch(
       `https://5sim.net/v1/user/buy/activation/${country}/any/${service}`,
       {
@@ -316,37 +311,28 @@ app.get("/verify", async (req, res) => {
   }
 
   try {
+    const verify = await fetch(
+      `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.KORAPAY_SECRET}`
+        }
+      }
+    );
 
-  const verify = await fetch(...);
+    const data = await verify.json();
 
-  const data = await verify.json();
-
-  if (data.status === true && data.data.status === "success") {
-
-    const email = data.data.customer.email;
-    const amountPaid = data.data.amount;
-
-    global.users = global.users || {};
-
-    if (!global.users[email]) {
-      global.users[email] = { balance: 0 };
+    if (data.status === true && data.data.status === "success") {
+      return res.json({ success: true });
+    } else {
+      return res.json({ success: false });
     }
 
-    global.users[email].balance += amountPaid;
-
-    console.log("Wallet funded:", email, global.users[email].balance);
-
-    return res.json({ success: true });
-
-  } else {
+  } catch (err) {
     return res.json({ success: false });
   }
+});
 
-} catch (err) {
-  console.log(err);
-  return res.json({ success: false });
-}
-    
 // 🚀 SERVER
 const PORT = process.env.PORT || 3000;
 
