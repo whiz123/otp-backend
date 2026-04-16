@@ -219,7 +219,6 @@ app.get("/check", async (req, res) => {
   }
 });
 
-
 // 🔥👇 PASTE YOUR KORAPAY CODE HERE
 app.post("/create-payment", async (req, res) => {
   try {
@@ -244,6 +243,16 @@ app.post("/create-payment", async (req, res) => {
 })
 });
 
+ const data = await response.json();
+
+res.json(data);
+
+} catch (err) {
+  console.log(err);
+  res.status(500).json({ error: "Payment failed" });
+}
+});   
+    
 app.post("/fund-wallet", async (req, res) => {
   console.log("FUND WALLET HIT:", req.body);
 
