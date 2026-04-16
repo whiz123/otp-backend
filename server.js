@@ -124,13 +124,13 @@ app.get("/price", async (req, res) => {
     ];
 
     if (country === "italy" && service.includes("whatsapp")) {
-      profit = 5000;
+      profit = 3,500;
     }
     else if (highTier.includes(country)) {
-      profit = 3500;
+      profit = 3,000;
     }
     else if (africa.includes(country)) {
-      profit = 2500;
+      profit = 2,000;
     }
 
     const finalPrice = Math.ceil(costNGN + profit);
