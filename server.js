@@ -124,13 +124,13 @@ app.get("/price", async (req, res) => {
     ];
 
     if (country === "italy" && service.includes("whatsapp")) {
-      profit = 3500;
+      profit = 5000;
     }
     else if (highTier.includes(country)) {
-      profit = 3000;
+      profit = 3500;
     }
     else if (africa.includes(country)) {
-      profit = 2000;
+      profit = 2500;
     }
 
     const finalPrice = Math.ceil(costNGN + profit);
@@ -245,6 +245,7 @@ app.post("/create-payment", async (req, res) => {
 });
 
  app.post("/fund-wallet", async (req, res) => {
+  console.log("FUND WALLET HIT:", req.body); 
   try {
     const { email, amount } = req.body;
 
@@ -279,6 +280,8 @@ app.post("/create-payment", async (req, res) => {
     });
 
     const data = await response.json();
+
+    console.log("KORAPAY RESPONSE:", data);
 
     return res.json(data);
 
