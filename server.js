@@ -7,9 +7,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 🔐 YOUR 5SIM API KEY (UNCHANGED)
+// 🔐 YOUR 5SIM API KEY (UNTOUCHED)
 const API_KEY = "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4MDc0NzI3MjQsImlhdCI6MTc3NTkzNjcyNCwicmF5IjoiMjA4NWEyOGIxOWU0OTFlNWYzNzQzM2M3ODRiMmJlNGMiLCJzdWIiOjM5NjI3Nzd9.IxRiwmZLIOZ1fxsb97IFFXyXdDyHsbM1ALeOQ6qNmtyvqK2g6_WHecuPqHLknlwAzCiSzHnEfhqPGZYLX2MnmP0RAjV3f5U9v79GyRLFpGfoXLP-wvNKsPzN_9-52M4xo7nyI6vkNu65qgLOZNXAHvza90GELhboy2p-I3lNvJN3GCQ2rAwz7CoWtq3-pC02JQf5D_f9g_m-5jiPBM5GB-56rnCk-C6zSdNzyTBAnTjdYswV7kGnvteiUjqwBI9XCrbipW1INT5oLdLpIlmNhDWcqH3BV_cI7VIwvkBIHEhWdXMZD5y4JMHWo8G62Nlqt9XyS6G-DansCAdDKmLwqA";
 
+// 🔒 prevent duplicate payment
 const usedRefs = new Set();
 
 
@@ -19,11 +20,7 @@ app.get("/countries", async (req, res) => {
     const r = await fetch("https://5sim.net/v1/guest/countries");
     const data = await r.json();
 
-    const priority = [
-      "usa","england","canada","india","nigeria",
-      "germany","france","netherlands","sweden",
-      "brazil","spain","italy","turkey"
-    ];
+    const priority = ["usa","england","canada","india","nigeria"];
 
     const all = Object.keys(data);
 
@@ -33,13 +30,14 @@ app.get("/countries", async (req, res) => {
     ];
 
     res.json(sorted);
+
   } catch {
     res.status(500).json({ error: "Failed to fetch countries" });
   }
 });
 
 
-// 📱 SERVICES (FIXED - YOUR ORIGINAL PRIORITY)
+// 📱 SERVICES
 app.get("/services", async (req, res) => {
   try {
     const country = req.query.country || "usa";
@@ -47,29 +45,15 @@ app.get("/services", async (req, res) => {
     const r = await fetch(`https://5sim.net/v1/guest/prices?country=${country}`);
     const data = await r.json();
 
-    const servicesObj = data[country] || {};
+    res.json(Object.keys(data[country] || {}));
 
-    const priority = [
-      "whatsapp","telegram","facebook","instagram",
-      "twitter","tiktok","twitch","google",
-      "googlevoice","youtube"
-    ];
-
-    const all = Object.keys(servicesObj);
-
-    const sorted = [
-      ...priority.filter(p => all.includes(p)),
-      ...all.filter(s => !priority.includes(s))
-    ];
-
-    res.json(sorted);
   } catch {
     res.status(500).json({ error: "Failed to fetch services" });
   }
 });
 
 
-// 💰 PRICE (UNCHANGED)
+// 💰 PRICE
 app.get("/price", async (req, res) => {
   try {
     const { country, service } = req.query;
@@ -80,22 +64,11 @@ app.get("/price", async (req, res) => {
     const serviceData = data[country]?.[service];
     if (!serviceData) return res.json({ price: 0 });
 
-    const first = Object.values(serviceData)[0];
-    const costUSD = first?.cost || 0;
+    const costUSD = Object.values(serviceData)[0]?.cost || 0;
 
-    const rate = 1500;
-    const costNGN = costUSD * rate;
+    const finalPrice = Math.ceil(costUSD * 1500 + 3000);
 
-    let profit = 3000;
-
-    const highTier = ["usa","england","canada","australia"];
-    const africa = ["nigeria","ghana","kenya"];
-
-    if (country === "italy" && service.includes("whatsapp")) profit = 5000;
-    else if (highTier.includes(country)) profit = 3500;
-    else if (africa.includes(country)) profit = 2500;
-
-    res.json({ price: Math.ceil(costNGN + profit) });
+    res.json({ price: finalPrice });
 
   } catch {
     res.status(500).json({ error: "Failed to get price" });
@@ -103,7 +76,7 @@ app.get("/price", async (req, res) => {
 });
 
 
-// 🔥 BUY NUMBER
+// 🔥 BUY NUMBER (WALLET)
 app.post("/buy-number", async (req, res) => {
   try {
     const { country, service, email, price } = req.body;
@@ -131,9 +104,12 @@ app.post("/buy-number", async (req, res) => {
       }
     );
 
-    res.json(await r.json());
+    const data = await r.json();
 
-  } catch {
+    res.json(data);
+
+  } catch (err) {
+    console.log(err);
     res.status(500).json({ error: "Buy failed" });
   }
 });
@@ -152,6 +128,7 @@ app.get("/check", async (req, res) => {
     );
 
     res.json(await r.json());
+
   } catch {
     res.status(500).json({ error: "Check failed" });
   }
@@ -163,10 +140,6 @@ app.post("/fund-wallet", async (req, res) => {
   try {
     const { email, amount } = req.body;
 
-    if (!email || !amount) {
-      return res.json({ status: false });
-    }
-
     const reference = "FUND_" + Date.now();
 
     const response = await fetch("https://api.korapay.com/merchant/api/v1/charges/initialize", {
@@ -176,9 +149,9 @@ app.post("/fund-wallet", async (req, res) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        amount: Number(amount),
+        amount,
         currency: "NGN",
-        reference: reference,
+        reference,
         customer: { email },
         redirect_url: "https://otp-site.onrender.com/success.html?type=fund"
       })
@@ -186,34 +159,40 @@ app.post("/fund-wallet", async (req, res) => {
 
     const data = await response.json();
 
-    // 🔥 VERY IMPORTANT FIX
-    return res.json({
-      checkout_url: data?.data?.checkout_url
-    });
+    res.json(data);
 
   } catch (err) {
-    console.log(err);
-    return res.json({ status: false });
+    res.status(500).json({ error: "Funding failed" });
   }
 });
 
-// ✅ VERIFY PAYMENT (FINAL FIX)
-app.get("/verify", async (req, res) => {
-  try {
-    const reference = req.query.reference;
 
-    const verify = await fetch(`https://api.korapay.com/merchant/api/v1/charges/${reference}`, {
-      headers: {
-        Authorization: `Bearer ${process.env.KORAPAY_SECRET}`
+// ✅ VERIFY PAYMENT (SECURED)
+app.post("/verify-payment", async (req, res) => {
+  try {
+    const { reference } = req.body;
+
+    if (usedRefs.has(reference)) {
+      return res.json({ success: false });
+    }
+
+    const verify = await fetch(
+      `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.KORAPAY_SECRET}`
+        }
       }
-    });
+    );
 
     const data = await verify.json();
 
-    if (data.status === true && data.data.status === "success") {
+    if (data.status && data.data.status === "success") {
+
+      usedRefs.add(reference);
 
       const email = data.data.customer.email;
-      const amountPaid = data.data.amount;
+      const amount = data.data.amount;
 
       global.users = global.users || {};
 
@@ -221,22 +200,19 @@ app.get("/verify", async (req, res) => {
         global.users[email] = { balance: 0 };
       }
 
-      // 🔒 prevent duplicate funding
-      if (!usedRefs.has(reference)) {
-        global.users[email].balance += amountPaid;
-        usedRefs.add(reference);
-      }
+      global.users[email].balance += amount;
 
       return res.json({ success: true });
+
     }
 
     res.json({ success: false });
 
-  } catch (err) {
-    console.log(err);
+  } catch {
     res.json({ success: false });
   }
 });
+
 
 // 🚀 SERVER
 const PORT = process.env.PORT || 3000;
