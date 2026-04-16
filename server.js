@@ -147,38 +147,36 @@ app.get("/price", async (req, res) => {
 // 🔥 BUY NUMBER (REAL)
 app.post("/buy-number", async (req, res) => {
   try {
-    const { country, service, reference } = req.body;
+
+    const { country, service, email, price } = req.body;
+
     console.log("Incoming:", country, service);
 
     // 🔥 WALLET SYSTEM START
+    global.users = global.users || {};
 
-const email = req.body.email; // must come from frontend
+    if (!global.users[email]) {
+      global.users[email] = { balance: 0 };
+    }
 
-// ⚠️ Temporary simple storage (we improve later)
-global.users = global.users || {};
+    const user = global.users[email];
 
-if (!global.users[email]) {
-  global.users[email] = { balance: 0 };
-}
+    const finalPrice = price;
 
-const user = global.users[email];
+    if (user.balance < finalPrice) {
+      return res.json({
+        error: "Insufficient balance, please fund wallet"
+      });
+    }
 
-// 👉 USE YOUR EXISTING PRICE (IMPORTANT)
-const finalPrice = req.body.price; // OR your calculated price
+    // deduct balance
+    user.balance -= finalPrice;
 
-if (user.balance < finalPrice) {
-  return res.json({
-    error: "Insufficient balance, please fund wallet"
-  });
-}
+    console.log("New balance:", user.balance);
+    // 🔥 WALLET SYSTEM END
 
-// deduct balance
-user.balance -= finalPrice;
 
-console.log("New balance:", user.balance);
-
-// 🔥 WALLET SYSTEM END
-    
+    // 🔥 BUY FROM 5SIM
     const r = await fetch(
       `https://5sim.net/v1/user/buy/activation/${country}/any/${service}`,
       {
@@ -189,6 +187,7 @@ console.log("New balance:", user.balance);
     );
 
     const result = await r.json();
+
     console.log("5sim response:", result);
 
     res.json(result);
@@ -198,7 +197,6 @@ console.log("New balance:", user.balance);
     res.status(500).json({ error: "Failed to buy number" });
   }
 });
-
 
 // 📩 CHECK OTP
 app.get("/check", async (req, res) => {
