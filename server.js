@@ -219,8 +219,6 @@ app.get("/check", async (req, res) => {
   }
 });
 
-});
-
 // ✅ NEW WALLET SYSTEM
 app.post("/buy-otp", async (req, res) => {
   const { email, amount, country, service } = req.body;
