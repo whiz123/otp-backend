@@ -475,8 +475,6 @@ app.post("/webhook", async (req, res) => {
   }
 });
 
-}); // end of webhook
-
 // 👇 ADD THIS NOW
 app.post("/verify-payment", async (req, res) => {
   const { reference } = req.body;
