@@ -6,7 +6,15 @@ const mongoose = require("mongoose");
 
 console.log("MONGO:", process.env.MONGO_URI);
 
-mongoose.connect(process.env.MONGO_URI);
+if (!process.env.MONGO_URI) {
+  console.log("❌ MONGO_URI is missing");
+} else {
+  console.log("✅ MONGO_URI found");
+}
+
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB Connected"))
+  .catch(err => console.log("❌ Mongo Error:", err));
 
 const User = mongoose.model("User", {
   email: String,
