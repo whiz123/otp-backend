@@ -166,6 +166,7 @@ app.get("/price", async (req, res) => {
 // 🔥 BUY NUMBER (REAL)
 app.post("/buy-number", async (req, res) => {
   try {
+    console.log("BUY-OTP BODY:", req.body);
     const { country, service, reference } = req.body;
     console.log("Incoming:", country, service);
 // ❌ NO REFERENCE
@@ -240,6 +241,7 @@ app.get("/check", async (req, res) => {
 
 // ✅ NEW WALLET SYSTEM
 app.post("/buy-otp", async (req, res) => {
+  console.log("BUY-OTP BODY:", req.body);
   const { email, amount, country, service } = req.body;
 
   try {
