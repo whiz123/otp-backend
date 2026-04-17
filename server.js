@@ -4,7 +4,7 @@ const cors = require("cors");
 
 const mongoose = require("mongoose");
 
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://whizjoy123:Minimum112acluster0.qe8c0df.mongodb.net/test";
+const MONGO_URI = process.env.MONGO_URI;
 
 console.log("MONGO:", MONGO_URI);
 
