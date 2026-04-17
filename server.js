@@ -501,6 +501,23 @@ app.post("/verify-payment", async (req, res) => {
   }
 });
 
+app.get("/balance", async (req, res) => {
+  const email = req.query.email;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.json({ balance: 0 });
+    }
+
+    res.json({ balance: user.balance });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ balance: 0 });
+  }
+});
+
 app.listen(PORT, () => {
   console.log("Server running 🚀");
 });
