@@ -2,6 +2,15 @@ const express = require("express");
 const fetch = require("node-fetch");
 const cors = require("cors");
 
+const mongoose = require("mongoose");
+
+mongoose.connect(process.env.MONGO_URI);
+
+const User = mongoose.model("User", {
+  email: String,
+  balance: { type: Number, default: 0 }
+});
+
 const app = express();
 
 app.use(cors());
