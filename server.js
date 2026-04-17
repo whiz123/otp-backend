@@ -416,10 +416,6 @@ app.get("/verify-payment", async (req, res) => {
 // 🚀 SERVER
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log("Server running 🚀");
-});
-
 // 💰 FUND WALLET (KORAPAY)
 app.post("/fund-wallet", async (req, res) => {
   const { email, amount } = req.body;
@@ -477,4 +473,36 @@ app.post("/webhook", async (req, res) => {
     console.log("Webhook error:", err);
     res.sendStatus(500);
   }
+});
+
+}); // end of webhook
+
+// 👇 ADD THIS NOW
+app.post("/verify-payment", async (req, res) => {
+  const { reference } = req.body;
+
+  try {
+    const response = await fetch(`https://api.korapay.com/merchant/api/v1/charges/${reference}`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${process.env.KORAPAY_SECRET}`
+      }
+    });
+
+    const data = await response.json();
+
+    if (data.data.status === "success") {
+      return res.json({ success: true });
+    } else {
+      return res.json({ success: false });
+    }
+
+  } catch (err) {
+    console.log(err);
+    return res.json({ success: false });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log("Server running 🚀");
 });
