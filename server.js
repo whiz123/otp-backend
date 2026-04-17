@@ -4,15 +4,11 @@ const cors = require("cors");
 
 const mongoose = require("mongoose");
 
-console.log("MONGO:", process.env.MONGO_URI);
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://whizjoy123:Minimum112acluster0.qe8c0df.mongodb.net/test";
 
-if (!process.env.MONGO_URI) {
-  console.log("❌ MONGO_URI is missing");
-} else {
-  console.log("✅ MONGO_URI found");
-}
+console.log("MONGO:", MONGO_URI);
 
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch(err => console.log("❌ Mongo Error:", err));
 
