@@ -243,7 +243,7 @@ app.post("/buy-otp", async (req, res) => {
     // ✅ Call 5SIM
     const otpRes = await fetch(`https://5sim.net/v1/user/buy/activation/${country}/any/${service}`, {
       headers: {
-        Authorization: `Bearer ${API_KEY}`   // ✅ FIXED
+        Authorization: `Bearer ${process.env.API_KEY}`
       }
     });
 
