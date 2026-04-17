@@ -419,3 +419,62 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("Server running 🚀");
 });
+
+// 💰 FUND WALLET (KORAPAY)
+app.post("/fund-wallet", async (req, res) => {
+  const { email, amount } = req.body;
+
+  try {
+    const response = await fetch("https://api.korapay.com/merchant/api/v1/charges/initialize", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.KORAPAY_SECRET}`
+      },
+      body: JSON.stringify({
+        amount,
+        currency: "NGN",
+        reference: "ref_" + Date.now(),
+        customer: { email },
+        notification_url: "https://otp-backend-srw4.onrender.com/webhook"
+      })
+    });
+
+    const data = await response.json();
+
+    res.json(data);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Payment init failed" });
+  }
+});
+
+// 🔔 KORAPAY WEBHOOK
+app.post("/webhook", async (req, res) => {
+  try {
+    const event = req.body;
+
+    console.log("Webhook received:", event);
+
+    if (event.event === "charge.success") {
+      const email = event.data.customer.email;
+      const amount = event.data.amount;
+
+      let user = await User.findOne({ email });
+
+      if (!user) {
+        user = new User({ email, balance: 0 });
+      }
+
+      user.balance += amount;
+      await user.save();
+
+      console.log("Wallet funded:", email, amount);
+    }
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.log("Webhook error:", err);
+    res.sendStatus(500);
+  }
+});
