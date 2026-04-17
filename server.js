@@ -4,6 +4,8 @@ const cors = require("cors");
 
 const mongoose = require("mongoose");
 
+console.log("MONGO:", process.env.MONGO_URI);
+
 mongoose.connect(process.env.MONGO_URI);
 
 const User = mongoose.model("User", {
