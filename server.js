@@ -219,6 +219,60 @@ app.get("/check", async (req, res) => {
   }
 });
 
+});
+
+// ✅ NEW WALLET SYSTEM
+app.post("/buy-otp", async (req, res) => {
+  const { email, amount, country, service } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.json({ success: false, message: "User not found" });
+    }
+
+    if (user.balance < amount) {
+      return res.json({ success: false, message: "Insufficient balance" });
+    }
+
+    // ✅ Deduct balance
+    user.balance -= amount;
+    await user.save();
+
+    // ✅ Call 5SIM
+    const otpRes = await fetch(`https://5sim.net/v1/user/buy/activation/${country}/any/${service}`, {
+      headers: {
+        Authorization: `Bearer ${API_KEY}`   // ✅ FIXED
+      }
+    });
+
+    const otpData = await otpRes.json();
+
+    // ❌ If 5SIM failed → refund user
+    if (!otpData || otpData.error) {
+      user.balance += amount;
+      await user.save();
+
+      return res.json({
+        success: false,
+        message: "OTP purchase failed"
+      });
+    }
+
+    console.log("OTP:", otpData);
+
+    return res.json({
+      success: true,
+      data: otpData   // optional but useful later
+    });
+
+  } catch (err) {
+    console.log(err);
+    return res.json({ success: false, message: "Server error" });
+  }
+});
+
 // 🔥👇 PASTE YOUR KORAPAY CODE HERE
 app.post("/create-payment", async (req, res) => {
   try {
