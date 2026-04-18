@@ -563,16 +563,19 @@ app.get("/verify-payment", async (req, res) => {
   const reference = req.query.ref;
 
   try {
-    const response = await axios.get(
-      `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`
-        }
-      }
-    );
+    const response = await fetch(
+  `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
+  {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`,
+      "Content-Type": "application/json"
+    }
+  }
+);
 
-    const data = response.data.data;
+const result = await response.json();
+const data = result.data;
 
     if (data.status === "success") {
       const amount = data.amount;
