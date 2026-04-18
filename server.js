@@ -519,6 +519,8 @@ app.get("/balance", async (req, res) => {
   }
 });
 
+const axios = require("axios");
+
 app.get("/fund-wallet", async (req, res) => {
   const amount = req.query.amount;
 
@@ -526,10 +528,74 @@ app.get("/fund-wallet", async (req, res) => {
     return res.send("Amount is required");
   }
 
-  // 🔥 Example Korapay payment link
-  const paymentLink = `https://korapay.com/pay?amount=${amount}`;
+  try {
+    const reference = "ref_" + Date.now();
 
-  res.redirect(paymentLink);
+    const response = await axios.post(
+      "https://api.korapay.com/merchant/api/v1/charges/initialize",
+      {
+        amount: Number(amount),
+        currency: "NGN",
+        reference: reference,
+        customer: {
+          email: "user@email.com"
+        },
+        notification_url: "https://otp-backend-srw4.onrender.com/webhook",
+        redirect_url: `https://otp-site.onrender.com/success.html?ref=${reference}&amount=${amount}`
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    const checkoutUrl = response.data.data.checkout_url;
+
+    res.redirect(checkoutUrl);
+
+  } catch (error) {
+    console.log(error.response?.data || error.message);
+    res.send("Payment error");
+  }
+});
+
+app.get("/verify-payment", async (req, res) => {
+  const reference = req.query.ref;
+
+  try {
+    const response = await axios.get(
+      `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`
+        }
+      }
+    );
+
+    const data = response.data.data;
+
+    if (data.status === "success") {
+      const amount = data.amount;
+      const email = data.customer.email;
+
+      // ✅ Update wallet
+      const user = await User.findOne({ email });
+      if (user) {
+        user.balance += amount;
+        await user.save();
+      }
+
+      return res.json({ success: true });
+    }
+
+    res.json({ success: false });
+
+  } catch (err) {
+    console.log(err.message);
+    res.json({ success: false });
+  }
 });
 
 app.listen(PORT, () => {
