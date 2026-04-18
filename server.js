@@ -1,3 +1,4 @@
+console.log("🔥 NEW VERSION DEPLOYED");
 const express = require("express");
 const fetch = require("node-fetch");
 const cors = require("cors");
