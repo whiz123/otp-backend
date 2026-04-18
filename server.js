@@ -422,20 +422,20 @@ app.post("/fund-wallet", async (req, res) => {
 
   try {
     const response = await fetch("https://api.korapay.com/merchant/api/v1/charges/initialize", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.KORAPAY_SECRET}`
-      },
-      body: JSON.stringify({
-        amount,
-        currency: "NGN",
-        reference: "ref_" + Date.now(),
-        customer: { email },
-        notification_url: "https://otp-backend-srw4.onrender.com/webhook"
-        callback_url: `https://otp-site.onrender.com/success.html?email=${email}`,
-      })
-    });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${process.env.KORAPAY_SECRET}`
+  },
+  body: JSON.stringify({
+    amount,
+    currency: "NGN",
+    reference: "ref_" + Date.now(),
+    customer: { email },
+    notification_url: "https://otp-backend-srw4.onrender.com/webhook",
+    callback_url: `https://otp-site.onrender.com/success.html?email=${email}`
+  })
+});
 
     const data = await response.json();
 
