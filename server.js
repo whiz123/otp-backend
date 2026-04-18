@@ -433,6 +433,7 @@ app.post("/fund-wallet", async (req, res) => {
         reference: "ref_" + Date.now(),
         customer: { email },
         notification_url: "https://otp-backend-srw4.onrender.com/webhook"
+        callback_url: `https://otp-site.onrender.com/success.html?email=${email}`,
       })
     });
 
