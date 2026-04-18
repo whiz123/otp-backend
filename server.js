@@ -519,6 +519,19 @@ app.get("/balance", async (req, res) => {
   }
 });
 
+app.get("/fund-wallet", async (req, res) => {
+  const amount = req.query.amount;
+
+  if (!amount) {
+    return res.send("Amount is required");
+  }
+
+  // 🔥 Example Korapay payment link
+  const paymentLink = `https://korapay.com/pay?amount=${amount}`;
+
+  res.redirect(paymentLink);
+});
+
 app.listen(PORT, () => {
   console.log("Server running 🚀");
 });
