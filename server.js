@@ -519,7 +519,7 @@ app.get("/balance", async (req, res) => {
   }
 });
 
-const axios = require("axios");
+const fetch = require("node-fetch");
 
 app.get("/fund-wallet", async (req, res) => {
   const amount = req.query.amount;
@@ -531,29 +531,27 @@ app.get("/fund-wallet", async (req, res) => {
   try {
     const reference = "ref_" + Date.now();
 
-    const response = await axios.post(
-      "https://api.korapay.com/merchant/api/v1/charges/initialize",
-      {
-        amount: Number(amount),
-        currency: "NGN",
-        reference: reference,
-        customer: {
-          email: "user@email.com"
-        },
-        notification_url: "https://otp-backend-srw4.onrender.com/webhook",
-        redirect_url: `https://otp-site.onrender.com/success.html?ref=${reference}&amount=${amount}`
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`,
-          "Content-Type": "application/json"
-        }
-      }
-    );
+    const response = await fetch("https://api.korapay.com/merchant/api/v1/charges/initialize", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`,
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    amount: Number(amount),
+    currency: "NGN",
+    reference: reference,
+    customer: {
+      email: "test@gopayna.com"
+    },
+    redirect_url: `https://otp-site.onrender.com/success.html?ref=${reference}`
+  })
+});
 
-    const checkoutUrl = response.data.data.checkout_url;
+const data = await response.json();
+const checkoutUrl = data.data.checkout_url;
 
-    res.redirect(checkoutUrl);
+res.redirect(checkoutUrl);
 
   } catch (error) {
     console.log(error.response?.data || error.message);
