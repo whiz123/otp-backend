@@ -641,11 +641,11 @@ if (
     }
 
     // ❌ NOT SUCCESS
-    return res.json({ success: false });
-
+    return res.json({ success: false, full: result });
+    
   } catch (error) {
     console.log("VERIFY ERROR:", error.message);
-    return res.json({ success: false });
+    return res.json({ success: false, error: error.message });
   }
 });
 
