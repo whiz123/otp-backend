@@ -525,8 +525,8 @@ app.get("/", (req, res) => {
 });
 
 app.get("/fund-wallet", async (req, res) => {
-  const email = req.query.email || "user@email.com";
-  
+  const amount = req.query.amount;
+
   if (!amount) {
     return res.send("Amount is required");
   }
@@ -544,11 +544,11 @@ app.get("/fund-wallet", async (req, res) => {
     amount: Number(amount),
     currency: "NGN",
     reference: reference,
+    redirect_url: `https://otp-site.onrender.com/success.html?ref=${reference}`,
     customer: {
       name: "OTP User",
-      email: email
-    },
-    callback_url: `https://otp-site.onrender.com/success.html?reference=${reference}`
+      email: "user@email.com"
+    }
   })
 });
 
