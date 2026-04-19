@@ -604,12 +604,11 @@ app.get("/verify-payment", async (req, res) => {
 
     console.log("VERIFY RESPONSE:", result);
 
-    // ❌ if no data
-    if (!result || !result.data) {
-      return res.json({ success: false });
-    }
+    if (!result) {
+  return res.json({ success: false });
+}
 
-    const data = result.data;
+const data = result.data || result;
 
 // ⏳ HANDLE PENDING PAYMENT
 if (data.status === "pending" || data.status === "processing") {
