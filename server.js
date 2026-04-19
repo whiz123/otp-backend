@@ -554,8 +554,8 @@ const checkoutUrl = data.data.checkout_url;
 res.redirect(checkoutUrl);
 
   } catch (error) {
-    console.log(error.response?.data || error.message);
-    res.send("Payment error");
+    console.log("🔥 KORA ERROR:", error);
+res.send(error.message);
   }
 });
 
