@@ -549,10 +549,16 @@ app.get("/fund-wallet", async (req, res) => {
 });
 
 const data = await response.json();
+
+console.log("KORA RESPONSE:", data);
+
+if (!data.status) {
+  return res.send(data.message || "Kora error");
+}
+
 const checkoutUrl = data.data.checkout_url;
-
 res.redirect(checkoutUrl);
-
+    
   } catch (error) {
     console.log("🔥 KORA ERROR:", error);
 res.send(error.message);
