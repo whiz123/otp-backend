@@ -520,8 +520,6 @@ app.get("/balance", async (req, res) => {
   }
 });
 
-const fetch = require("node-fetch");
-
 app.get("/fund-wallet", async (req, res) => {
   const amount = req.query.amount;
 
