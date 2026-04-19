@@ -617,7 +617,11 @@ if (data.status === "pending" || data.status === "processing") {
 }
 
 // ✅ PAYMENT SUCCESS
-if (data.status === "success" || data.status === "successful") {
+if (
+  data.status === "success" ||
+  data.status === "successful" ||
+  data.status === "completed"
+) {
       const amount = data.amount;
       const email = req.query.email;
  
