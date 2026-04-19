@@ -525,8 +525,8 @@ app.get("/", (req, res) => {
 });
 
 app.get("/fund-wallet", async (req, res) => {
-  const amount = req.query.amount;
-
+  const email = req.query.email || "user@email.com";
+  
   if (!amount) {
     return res.send("Amount is required");
   }
