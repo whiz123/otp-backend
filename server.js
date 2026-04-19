@@ -544,11 +544,11 @@ app.get("/fund-wallet", async (req, res) => {
     amount: Number(amount),
     currency: "NGN",
     reference: reference,
-    redirect_url: `https://otp-site.onrender.com/success.html?ref=${reference}`,
     customer: {
       name: "OTP User",
-      email: "user@email.com"
-    }
+      email: email
+    },
+    callback_url: `https://otp-site.onrender.com/success.html?reference=${reference}`
   })
 });
 
