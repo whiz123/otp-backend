@@ -540,10 +540,11 @@ app.get("/fund-wallet", async (req, res) => {
     amount: Number(amount),
     currency: "NGN",
     reference: reference,
+    redirect_url: `https://otp-site.onrender.com/success.html?ref=${reference}`,
     customer: {
-      email: "test@gopayna.com"
-    },
-    redirect_url: `https://otp-site.onrender.com/success.html?ref=${reference}`
+      name: "OTP User",
+      email: "user@email.com"
+    }
   })
 });
 
