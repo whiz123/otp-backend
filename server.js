@@ -520,6 +520,10 @@ app.get("/balance", async (req, res) => {
   }
 });
 
+app.get("/", (req, res) => {
+  res.send("Backend is working");
+});
+
 app.get("/fund-wallet", async (req, res) => {
   const amount = req.query.amount;
 
