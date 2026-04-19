@@ -605,7 +605,7 @@ app.get("/verify-payment", async (req, res) => {
     console.log("VERIFY RESPONSE:", result);
 
     if (!result) {
-  return res.json({ success: false });
+  return res.json({ success: false, full: result });
 }
 
 const data = result.data || result;
