@@ -611,8 +611,14 @@ app.get("/verify-payment", async (req, res) => {
 
     const data = result.data;
 
-    // ✅ PAYMENT SUCCESS
-    if (data.status === "success" || data.status === "successful") {
+// ⏳ HANDLE PENDING PAYMENT
+if (data.status === "pending" || data.status === "processing") {
+  console.log("PAYMENT STILL PENDING:", data.status);
+  return res.json({ success: false, status: data.status });
+}
+
+// ✅ PAYMENT SUCCESS
+if (data.status === "success" || data.status === "successful") {
       const amount = data.amount;
       const email = req.query.email;
  
