@@ -534,7 +534,7 @@ app.get("/fund-wallet", async (req, res) => {
   try {
     const reference = "ref_" + Date.now();
 
-    const response = await fetch("https://api.korapay.com/merchant/api/v1/charges", {
+    const response = await fetch("https://api.korapay.com/merchant/api/v1/charges/initialize", {
   method: "POST",
   headers: {
     Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`,
