@@ -528,17 +528,20 @@ app.get("/", (req, res) => {
   res.send("Backend is working");
 });
 
+// ✅ VERIFY PAYMENT (FINAL WORKING VERSION)
 app.get("/verify-payment", async (req, res) => {
   const reference = req.query.reference;
+  const email = req.query.email;
 
   if (!reference) {
     return res.json({ success: false, message: "No reference provided" });
   }
 
   try {
-  console.log("MY KEY IS:", process.env.KORAPAY_SECRET_KEY);
-    
-   const response = await fetch(
+    console.log("VERIFYING REF:", reference);
+    console.log("USER EMAIL:", email);
+
+    const response = await fetch(
       `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
       {
         method: "GET",
@@ -550,13 +553,7 @@ app.get("/verify-payment", async (req, res) => {
     );
 
     const result = await response.json();
-
-    // 🔥 TEMP DEBUG (IMPORTANT)
-    return res.json(result);
-
-    // =========================
-    // BELOW WILL RUN LATER
-    // =========================
+    console.log("KORA RESPONSE:", result);
 
     const data = result.data || result;
 
@@ -564,34 +561,38 @@ app.get("/verify-payment", async (req, res) => {
       return res.json({ success: false });
     }
 
-    // pending
+    // ⏳ STILL PROCESSING
     if (data.status === "pending" || data.status === "processing") {
       return res.json({ success: false, status: data.status });
     }
 
-    // success
+    // ✅ SUCCESS PAYMENT
     if (
       data.status === "success" ||
       data.status === "successful" ||
       data.status === "completed"
     ) {
-      const amount = data.amount;
-      const email = req.query.email;
+      const amount = Number(data.amount || 0);
 
-      console.log("SUCCESS PAYMENT:", amount, email);
+      console.log("✅ PAYMENT SUCCESS:", amount, email);
 
+      // ✅ UPDATE USER WALLET
       if (email && typeof User !== "undefined") {
         const user = await User.findOne({ email });
 
         if (user) {
           user.balance += amount;
           await user.save();
+          console.log("💰 WALLET UPDATED:", user.balance);
+        } else {
+          console.log("❌ USER NOT FOUND");
         }
       }
 
       return res.json({ success: true });
     }
 
+    // ❌ FAILED
     return res.json({ success: false });
 
   } catch (error) {
@@ -600,6 +601,8 @@ app.get("/verify-payment", async (req, res) => {
   }
 });
 
+
+// ✅ START SERVER
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
