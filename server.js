@@ -612,9 +612,9 @@ app.get("/verify-payment", async (req, res) => {
     const data = result.data;
 
     // ✅ PAYMENT SUCCESS
-    if (data.status === "success") {
+    if (data.status === true || data.status === "success") {
       const amount = data.amount;
-      const email = data.customer?.email;
+      const email = req.query.email;
 
       console.log("SUCCESS PAYMENT:", amount, email);
 
