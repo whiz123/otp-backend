@@ -528,63 +528,6 @@ app.get("/", (req, res) => {
   res.send("Backend is working");
 });
 
-app.get("/fund-wallet", async (req, res) => {
-  const amount = req.query.amount;
-  const email = req.query.email;
-
-  if (!amount) {
-    return res.send("Amount is required");
-  }
-
-  if (!email) {
-    return res.send("Email is required");
-  }
-
-  try {
-    const reference = "ref_" + Date.now();
-
-    const response = await fetch("https://api.korapay.com/merchant/api/v1/charges/initialize", {
-  method: "POST",
-  headers: {
-    Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`,
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    amount: Number(amount),
-    currency: "NGN",
-    reference: reference,
-    redirect_url: `https://otp-site.onrender.com/success.html?ref=${reference}`,
-    customer: {
-      name: "OTP User",
-      email: "user@email.com"
-    }
-  })
-});
-
-const data = await response.json();
-
-console.log("🔥 FULL KORA RESPONSE:", data);
-
-// ❌ If Kora failed OR returned empty
-if (!data.status || !data.data) {
-  return res.send(data.message || "Kora initialization failed");
-}
-
-// ❌ If checkout_url missing
-if (!data.data.checkout_url) {
-  return res.send("No checkout URL returned from Kora");
-}
-
-// ✅ Success
-const checkoutUrl = data.data.checkout_url;
-res.redirect(checkoutUrl);
-    
-  } catch (error) {
-    console.log("🔥 KORA ERROR:", error);
-res.send(error.message);
-  }
-});
-
 app.get("/verify-payment", async (req, res) => {
   const reference = req.query.reference;
 
@@ -605,34 +548,36 @@ app.get("/verify-payment", async (req, res) => {
     );
 
     const result = await response.json();
-    return res.json({ debug: true, result });
 
-    console.log("VERIFY RESPONSE:", result);
-    
-    if (!result || (!result.data && !result.status)) {
-  return res.json({ success: false, full: result });
-}
+    // 🔥 TEMP DEBUG (IMPORTANT)
+    return res.json(result);
 
-const data = result.data || result;
+    // =========================
+    // BELOW WILL RUN LATER
+    // =========================
 
-// ⏳ HANDLE PENDING PAYMENT
-if (data.status === "pending" || data.status === "processing") {
-  console.log("PAYMENT STILL PENDING:", data.status);
-  return res.json({ success: false, status: data.status });
-}
+    const data = result.data || result;
 
-// ✅ PAYMENT SUCCESS
-if (
-  data.status === "success" ||
-  data.status === "successful" ||
-  data.status === "completed"
-) {
+    if (!data) {
+      return res.json({ success: false });
+    }
+
+    // pending
+    if (data.status === "pending" || data.status === "processing") {
+      return res.json({ success: false, status: data.status });
+    }
+
+    // success
+    if (
+      data.status === "success" ||
+      data.status === "successful" ||
+      data.status === "completed"
+    ) {
       const amount = data.amount;
       const email = req.query.email;
- 
+
       console.log("SUCCESS PAYMENT:", amount, email);
 
-      // 🔥 OPTIONAL: update wallet (only if user exists)
       if (email && typeof User !== "undefined") {
         const user = await User.findOne({ email });
 
@@ -645,14 +590,15 @@ if (
       return res.json({ success: true });
     }
 
-    // ❌ NOT SUCCESS
-    return res.json({ success: false, full: result });
-    
+    return res.json({ success: false });
+
   } catch (error) {
     console.log("VERIFY ERROR:", error.message);
     return res.json({ success: false, error: error.message });
   }
 });
+
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log("Server running 🚀");
