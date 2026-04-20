@@ -23,10 +23,6 @@ const app = express();
 app.use(cors());
 app.use(express.json()); // ✅ ADD THIS HERE
 
-app.get("/", (req, res) => {
-  return res.send("NEW CODE WORKING");
-});
-
 // 🔐 YOUR 5SIM API KEY
 const API_KEY = "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4MDc0NzI3MjQsImlhdCI6MTc3NTkzNjcyNCwicmF5IjoiMjA4NWEyOGIxOWU0OTFlNWYzNzQzM2M3ODRiMmJlNGMiLCJzdWIiOjM5NjI3Nzd9.IxRiwmZLIOZ1fxsb97IFFXyXdDyHsbM1ALeOQ6qNmtyvqK2g6_WHecuPqHLknlwAzCiSzHnEfhqPGZYLX2MnmP0RAjV3f5U9v79GyRLFpGfoXLP-wvNKsPzN_9-52M4xo7nyI6vkNu65qgLOZNXAHvza90GELhboy2p-I3lNvJN3GCQ2rAwz7CoWtq3-pC02JQf5D_f9g_m-5jiPBM5GB-56rnCk-C6zSdNzyTBAnTjdYswV7kGnvteiUjqwBI9XCrbipW1INT5oLdLpIlmNhDWcqH3BV_cI7VIwvkBIHEhWdXMZD5y4JMHWo8G62Nlqt9XyS6G-DansCAdDKmLwqA";
 const usedRefs = new Set();
@@ -528,19 +524,71 @@ app.get("/", (req, res) => {
   res.send("Backend is working");
 });
 
-// ✅ VERIFY PAYMENT (FINAL WORKING VERSION)
+app.get("/fund-wallet", async (req, res) => {
+  const amount = req.query.amount;
+  const email = req.query.email;
+
+  if (!amount) {
+    return res.send("Amount is required");
+  }
+
+  if (!email) {
+    return res.send("Email is required");
+  }
+
+  try {
+    const reference = "ref_" + Date.now();
+
+    const response = await fetch("https://api.korapay.com/merchant/api/v1/charges/initialize", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`,
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    amount: Number(amount),
+    currency: "NGN",
+    reference: reference,
+    redirect_url: `https://otp-site.onrender.com/success.html?ref=${reference}`,
+    customer: {
+      name: "OTP User",
+      email: "user@email.com"
+    }
+  })
+});
+
+const data = await response.json();
+
+console.log("🔥 FULL KORA RESPONSE:", data);
+
+// ❌ If Kora failed OR returned empty
+if (!data.status || !data.data) {
+  return res.send(data.message || "Kora initialization failed");
+}
+
+// ❌ If checkout_url missing
+if (!data.data.checkout_url) {
+  return res.send("No checkout URL returned from Kora");
+}
+
+// ✅ Success
+const checkoutUrl = data.data.checkout_url;
+res.redirect(checkoutUrl);
+    
+  } catch (error) {
+    console.log("🔥 KORA ERROR:", error);
+res.send(error.message);
+  }
+});
+
 app.get("/verify-payment", async (req, res) => {
   const reference = req.query.reference;
-  const email = req.query.email;
 
   if (!reference) {
     return res.json({ success: false, message: "No reference provided" });
   }
 
   try {
-    console.log("VERIFYING REF:", reference);
-    console.log("USER EMAIL:", email);
-
     const response = await fetch(
       `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
       {
@@ -553,58 +601,45 @@ app.get("/verify-payment", async (req, res) => {
     );
 
     const result = await response.json();
-    console.log("KORA RESPONSE:", result);
 
-    const data = result.data || result;
+    console.log("VERIFY RESPONSE:", result);
 
-    if (!data) {
+    // ❌ if no data
+    if (!result || !result.data) {
       return res.json({ success: false });
     }
 
-    // ⏳ STILL PROCESSING
-    if (data.status === "pending" || data.status === "processing") {
-      return res.json({ success: false, status: data.status });
-    }
+    const data = result.data;
 
-    // ✅ SUCCESS PAYMENT
-    if (
-      data.status === "success" ||
-      data.status === "successful" ||
-      data.status === "completed"
-    ) {
-      const amount = Number(data.amount || 0);
+    // ✅ PAYMENT SUCCESS
+    if (data.status === "success") {
+      const amount = data.amount;
+      const email = data.customer?.email;
 
-      console.log("✅ PAYMENT SUCCESS:", amount, email);
+      console.log("SUCCESS PAYMENT:", amount, email);
 
-      // ✅ UPDATE USER WALLET
+      // 🔥 OPTIONAL: update wallet (only if user exists)
       if (email && typeof User !== "undefined") {
         const user = await User.findOne({ email });
 
         if (user) {
           user.balance += amount;
           await user.save();
-          console.log("💰 WALLET UPDATED:", user.balance);
-        } else {
-          console.log("❌ USER NOT FOUND");
         }
       }
 
       return res.json({ success: true });
     }
 
-    // ❌ FAILED
+    // ❌ NOT SUCCESS
     return res.json({ success: false });
 
   } catch (error) {
     console.log("VERIFY ERROR:", error.message);
-    return res.json({ success: false, error: error.message });
+    return res.json({ success: false });
   }
 });
 
-
-// ✅ START SERVER
-const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
+  console.log("Server running 🚀");
 });
