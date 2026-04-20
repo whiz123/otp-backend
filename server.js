@@ -549,7 +549,7 @@ app.get("/fund-wallet", async (req, res) => {
     amount: Number(amount),
     currency: "NGN",
     reference: reference,
-    redirect_url: 'https://otp-site.onrender.com/success.html?ref=${reference}'
+    redirect_url: `https://otp-site.onrender.com/success.html?ref=${reference}`,
     customer: {
       name: "OTP User",
       email: "user@email.com"
@@ -612,9 +612,9 @@ app.get("/verify-payment", async (req, res) => {
     const data = result.data;
 
     // ✅ PAYMENT SUCCESS
-    if (data.status === true || data.status === "success") {
+    if (data.status === "success") {
       const amount = data.amount;
-      const email = req.query.email;
+      const email = data.customer?.email;
 
       console.log("SUCCESS PAYMENT:", amount, email);
 
