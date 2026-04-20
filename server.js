@@ -605,10 +605,10 @@ app.get("/verify-payment", async (req, res) => {
     );
 
     const result = await response.json();
-
-    console.log("VERIFY RESPONSE:", result);
     return res.json({ debug: true, result });
 
+    console.log("VERIFY RESPONSE:", result);
+    
     if (!result || (!result.data && !result.status)) {
   return res.json({ success: false, full: result });
 }
