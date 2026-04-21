@@ -396,7 +396,6 @@ app.get("/verify-payment", async (req, res) => {
   }
 
   try {
-
     console.log("KEY CHECK:", process.env.KORAPAY_SECRET_KEY);
 
     const response = await fetch(
@@ -422,14 +421,24 @@ app.get("/verify-payment", async (req, res) => {
 
     if (data.status === "success") {
 
-      const amount = Number(data.amount); // ✅ FIXED
-      const email = data.metadata?.email || data.customer?.email; // ✅ FIXED
+      const amount = Number(data.amount);
+
+      // 🔥 ONLY use metadata email (VERY IMPORTANT)
+      const email = data.metadata?.email;
+
+      if (!email) {
+        console.log("NO EMAIL IN METADATA");
+        return res.json({ success: false });
+      }
 
       console.log("UPDATING USER:", email, amount);
 
-      if (!email) {
-        console.log("NO EMAIL FOUND");
-        return res.json({ success: false });
+      // 🔥 prevent duplicate funding
+      const existingTx = await Transaction.findOne({ reference });
+
+      if (existingTx) {
+        console.log("ALREADY PROCESSED");
+        return res.json({ success: true });
       }
 
       let user = await User.findOne({ email });
@@ -440,6 +449,13 @@ app.get("/verify-payment", async (req, res) => {
 
       user.balance += amount;
       await user.save();
+
+      // 🔥 save transaction
+      await Transaction.create({
+        reference,
+        email,
+        amount
+      });
 
       console.log("NEW BALANCE:", user.balance);
 
