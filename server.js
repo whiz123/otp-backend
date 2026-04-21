@@ -176,41 +176,6 @@ if (usedRefs.has(reference)) {
   return res.json({ error: "Already used" });
 }
 
-  // 🔥 VERIFY PAYMENT
-  const verify = await fetch(`https://api.korapay.com/merchant/api/v1/charges/${reference}`, {
-    headers: {
-      Authorization: `Bearer ${process.env.KORAPAY_SECRET}`
-    }
-  });
-
-  const data = await verify.json();
-
-  if (!(data.status && data.data.status === "success")) {
-    return res.json({ error: "Payment not verified" });
-  }
-
-  // ✅ MARK USED
-  usedRefs.add(reference);
-    const r = await fetch(
-      `https://5sim.net/v1/user/buy/activation/${country}/any/${service}`,
-      {
-        headers: {
-          Authorization: `Bearer ${API_KEY}`
-        }
-      }
-    );
-
-    const result = await r.json();
-    console.log("5sim response:", result);
-
-    res.json(result);
-
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Failed to buy number" });
-  }
-});
-
 
 // 📩 CHECK OTP
 app.get("/check", async (req, res) => {
