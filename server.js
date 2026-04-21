@@ -590,11 +590,11 @@ app.get("/verify-payment", async (req, res) => {
 
   try {
     const response = await fetch(
-      `https://api.korapay.com/merchant/api/v1/charges/${reference}/verify`,
+      `https://api.korapay.com/merchant/api/v1/transactions/${reference}`,
       {
         method: "GET",
         headers: {
-          Authorization: "Bearer sk_live_xzvzssC2QaWUdyVZ9wYS4TDuiK2nVtDkhMSXt4R7",
+          Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`,
           "Content-Type": "application/json"
         }
       }
@@ -617,10 +617,7 @@ app.get("/verify-payment", async (req, res) => {
       let user = await User.findOne({ email });
 
       if (!user) {
-        user = new User({
-          email,
-          balance: 0
-        });
+        user = new User({ email, balance: 0 });
       }
 
       user.balance += amount;
