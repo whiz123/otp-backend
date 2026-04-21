@@ -395,15 +395,15 @@ app.get("/verify-payment", async (req, res) => {
   console.log("KEY CHECK:", process.env.KORAPAY_SECRET_KEY);
 
   const response = await fetch(
-    fetch(`https://api.korapay.com/merchant/api/v1/transactions/${reference}`)
-    {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`,
-        "Content-Type": "application/json"
-      }
+  `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
+  {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`,
+      "Content-Type": "application/json"
     }
-  );
+  }
+);
 
     const result = await response.json();
 
