@@ -395,7 +395,7 @@ app.get("/verify-payment", async (req, res) => {
   console.log("KEY CHECK:", process.env.KORAPAY_SECRET_KEY);
 
   const response = await fetch(
-    `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
+    fetch(`https://api.korapay.com/merchant/api/v1/transactions/${reference}`)
     {
       method: "GET",
       headers: {
