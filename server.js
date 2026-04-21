@@ -397,10 +397,17 @@ app.get("/verify-payment", async (req, res) => {
 
   try {
 
-    console.log("KEY CHECK:", process.env.KORAPAY_SECRET_KEY);
+  // ✅ ADD THIS HERE (VERY TOP OF TRY)
+  const existing = await Transaction.findOne({ reference });
 
-    const response = await fetch(
-      `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
+  if (existing) {
+    return res.json({ success: true, message: "Already processed" });
+  }
+
+  console.log("KEY CHECK:", process.env.KORAPAY_SECRET_KEY);
+
+  const response = await fetch(
+    `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
       {
         method: "GET",
         headers: {
@@ -441,7 +448,14 @@ app.get("/verify-payment", async (req, res) => {
       user.balance += amount;
       await user.save();
 
-      console.log("NEW BALANCE:", user.balance);
+      // ✅ ADD THIS RIGHT HERE
+await Transaction.create({
+  reference,
+  email,
+  amount
+});
+      
+console.log("NEW BALANCE:", user.balance);
 
       return res.json({ success: true });
     }
