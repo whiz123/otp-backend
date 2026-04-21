@@ -585,15 +585,12 @@ app.get("/verify-payment", async (req, res) => {
   const reference = req.query.reference;
 
   if (!reference) {
-    return res.json({ success: false, message: "No reference provided" });
+    return res.json({ success: false });
   }
 
   try {
-    // 🔥 DEBUG (VERY IMPORTANT)
-    console.log("KEY CHECK:", process.env.KORAPAY_SECRET_KEY);
-
     const response = await fetch(
-      `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
+      `https://api.korapay.com/merchant/api/v1/charges/${reference}/verify`,
       {
         method: "GET",
         headers: {
@@ -607,46 +604,35 @@ app.get("/verify-payment", async (req, res) => {
 
     console.log("VERIFY RESPONSE:", result);
 
-    // ❌ if no data
     if (!result || !result.data) {
       return res.json({ success: false });
     }
 
     const data = result.data;
 
-    // ✅ PAYMENT SUCCESS
     if (data.status === "success") {
-
       const amount = data.amount;
       const email = data.customer?.email;
 
-      console.log("SUCCESS PAYMENT:", amount, email);
-
-      // ✅ FIND USER
       let user = await User.findOne({ email });
 
-      // ✅ CREATE USER IF NOT EXIST
       if (!user) {
         user = new User({
-          email: email,
+          email,
           balance: 0
         });
       }
 
-      // ✅ ADD BALANCE
       user.balance += amount;
-
-      // ✅ SAVE USER
       await user.save();
 
       return res.json({ success: true });
     }
 
-    // ❌ NOT SUCCESS
     return res.json({ success: false });
 
-  } catch (error) {
-    console.log("VERIFY ERROR:", error.message);
+  } catch (err) {
+    console.log(err);
     return res.json({ success: false });
   }
 });
