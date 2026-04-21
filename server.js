@@ -611,41 +611,41 @@ app.get("/verify-payment", async (req, res) => {
 
     const data = result.data;
 
-    // ✅ PAYMENT SUCCESS
-if (data?.data?.status === "success") {
+    // ✅ FIXED HERE
+    if (data.status === "success") {
 
-  const amount = data.data.amount;
-  const email = data.data.customer?.email;
+      const amount = data.amount;
+      const email = data.customer?.email;
 
-  console.log("SUCCESS PAYMENT:", amount, email);
+      console.log("SUCCESS PAYMENT:", amount, email);
 
-  // ✅ FIND USER
-  let user = await User.findOne({ email });
+      // ✅ FIND USER
+      let user = await User.findOne({ email });
 
-  // ✅ CREATE USER IF NOT EXIST
-  if (!user) {
-    user = new User({
-      email: email,
-      balance: 0
-    });
+      // ✅ CREATE USER IF NOT EXIST
+      if (!user) {
+        user = new User({
+          email: email,
+          balance: 0
+        });
+      }
+
+      // ✅ ADD BALANCE
+      user.balance += amount;
+
+      // ✅ SAVE USER
+      await user.save();
+
+      return res.json({ success: true });
+    }
+
+    // ❌ NOT SUCCESS
+    return res.json({ success: false });
+
+  } catch (error) {
+    console.log("VERIFY ERROR:", error.message);
+    return res.json({ success: false });
   }
-
-  // ✅ ADD BALANCE
-  user.balance += amount;
-
-  // ✅ SAVE USER
-  await user.save();
-
-  return res.json({ success: true });
-}
-
-// ❌ NOT SUCCESS
-return res.json({ success: false });
-
-} catch (error) {
-  console.log("VERIFY ERROR:", error.message);
-  return res.json({ success: false });
-}
 });
 
 // ✅ START SERVER
