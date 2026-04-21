@@ -392,18 +392,18 @@ app.get("/verify-payment", async (req, res) => {
 
   try {
 
-  console.log("KEY CHECK:", process.env.KORAPAY_SECRET_KEY);
+    console.log("KEY CHECK:", process.env.KORAPAY_SECRET_KEY);
 
-  const response = await fetch(
-  `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
-  {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`,
-      "Content-Type": "application/json"
-    }
-  }
-);
+    const response = await fetch(
+      `https://api.korapay.com/merchant/api/v1/transactions/${reference}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
 
     const result = await response.json();
 
@@ -428,7 +428,9 @@ app.get("/verify-payment", async (req, res) => {
       user.balance += amount;
       await user.save();
 
-      return res.json({ success: true });
+      console.log("Wallet funded:", email, amount);
+
+      return res.redirect("https://otp-site.onrender.com/");
     }
 
     return res.json({ success: false });
