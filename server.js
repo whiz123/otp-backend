@@ -602,36 +602,45 @@ app.get("/verify-payment", async (req, res) => {
 
     const result = await response.json();
 
-    console.log("VERIFY RESPONSE:", result);
+console.log("VERIFY RESPONSE:", result);
 
-    if (!result || !result.data) {
-      return res.json({ success: false });
-    }
+// ✅ safer data check
+const data = result?.data;
 
-    const data = result.data;
+if (!data) {
+  console.log("NO DATA FROM KORA");
+  return res.json({ success: false });
+}
 
-    if (data.status === "success") {
-      const amount = data.amount;
-      const email = data.customer?.email;
+console.log("VERIFY STATUS:", data.status);
 
-      let user = await User.findOne({ email });
+// ✅ FIX: accept both success & successful
+if (data.status === "success" || data.status === "successful") {
 
-      if (!user) {
-        user = new User({ email, balance: 0 });
-      }
+  const amount = data.amount;
+  const email = data.customer?.email;
 
-      user.balance += amount;
-      await user.save();
+  console.log("SUCCESS PAYMENT:", amount, email);
 
-      return res.json({ success: true });
-    }
+  let user = await User.findOne({ email });
 
-    return res.json({ success: false });
-
-  } catch (err) {
-    console.log(err);
-    return res.json({ success: false });
+  if (!user) {
+    user = new User({ email, balance: 0 });
   }
+
+  user.balance += amount;
+  await user.save();
+
+  return res.json({ success: true });
+}
+
+// ❌ not successful
+return res.json({ success: false });
+
+} catch (err) {
+  console.log("VERIFY ERROR:", err.message);
+  return res.json({ success: false });
+}
 });
 
 // ✅ START SERVER
