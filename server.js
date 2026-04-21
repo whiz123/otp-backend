@@ -589,6 +589,9 @@ app.get("/verify-payment", async (req, res) => {
   }
 
   try {
+    // 🔥 DEBUG (VERY IMPORTANT)
+    console.log("KEY CHECK:", process.env.KORAPAY_SECRET_KEY);
+
     const response = await fetch(
       `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
       {
@@ -611,7 +614,7 @@ app.get("/verify-payment", async (req, res) => {
 
     const data = result.data;
 
-    // ✅ FIXED HERE
+    // ✅ PAYMENT SUCCESS
     if (data.status === "success") {
 
       const amount = data.amount;
