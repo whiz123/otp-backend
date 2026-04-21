@@ -1,13 +1,11 @@
 console.log("🔥 NEW VERSION DEPLOYED");
+
 const express = require("express");
 const fetch = require("node-fetch");
 const cors = require("cors");
-
 const mongoose = require("mongoose");
 
 const MONGO_URI = process.env.MONGO_URI;
-
-console.log("MONGO:", MONGO_URI);
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected"))
@@ -19,27 +17,21 @@ const User = mongoose.model("User", {
 });
 
 const app = express();
-
 app.use(cors());
-app.use(express.json()); // ✅ ADD THIS HERE
+app.use(express.json());
 
-// 🔐 YOUR 5SIM API KEY
-const API_KEY = "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4MDc0NzI3MjQsImlhdCI6MTc3NTkzNjcyNCwicmF5IjoiMjA4NWEyOGIxOWU0OTFlNWYzNzQzM2M3ODRiMmJlNGMiLCJzdWIiOjM5NjI3Nzd9.IxRiwmZLIOZ1fxsb97IFFXyXdDyHsbM1ALeOQ6qNmtyvqK2g6_WHecuPqHLknlwAzCiSzHnEfhqPGZYLX2MnmP0RAjV3f5U9v79GyRLFpGfoXLP-wvNKsPzN_9-52M4xo7nyI6vkNu65qgLOZNXAHvza90GELhboy2p-I3lNvJN3GCQ2rAwz7CoWtq3-pC02JQf5D_f9g_m-5jiPBM5GB-56rnCk-C6zSdNzyTBAnTjdYswV7kGnvteiUjqwBI9XCrbipW1INT5oLdLpIlmNhDWcqH3BV_cI7VIwvkBIHEhWdXMZD5y4JMHWo8G62Nlqt9XyS6G-DansCAdDKmLwqA";
+// 🔐 5SIM
+const API_KEY = "YOUR_5SIM_KEY";
 const usedRefs = new Set();
 
-// 🌍 COUNTRIES (TOP FIRST)
+
+// 🌍 COUNTRIES
 app.get("/countries", async (req, res) => {
   try {
     const r = await fetch("https://5sim.net/v1/guest/countries");
     const data = await r.json();
 
-    const priority = [
-      "usa", "england", "canada", "india",
-      "nigeria", "germany", "france",
-      "netherlands", "sweden", "brazil",
-      "spain", "italy", "turkey"
-    ];
-
+    const priority = ["usa","england","canada","india","nigeria","germany","france"];
     const all = Object.keys(data);
 
     const sorted = [
@@ -48,8 +40,7 @@ app.get("/countries", async (req, res) => {
     ];
 
     res.json(sorted);
-
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: "Failed to fetch countries" });
   }
 });
@@ -60,590 +51,164 @@ app.get("/services", async (req, res) => {
   try {
     const country = req.query.country || "usa";
 
-    const r = await fetch(
-      `https://5sim.net/v1/guest/prices?country=${country}`
-    );
-
+    const r = await fetch(`https://5sim.net/v1/guest/prices?country=${country}`);
     const data = await r.json();
 
     const servicesObj = data[country] || {};
-
-    const priority = [
-      "whatsapp",
-      "telegram",
-      "facebook",
-      "instagram",
-      "twitter",
-      "tiktok",
-      "twitch",
-      "google",
-      "googlevoice",
-      "youtube"
-    ];
-
-    const all = Object.keys(servicesObj);
-
-    const sorted = [
-      ...priority.filter(p => all.includes(p)),
-      ...all.filter(s => !priority.includes(s))
-    ];
-
-    res.json(sorted);
-
-  } catch (err) {
+    res.json(Object.keys(servicesObj));
+  } catch {
     res.status(500).json({ error: "Failed to fetch services" });
   }
 });
 
 
-// 💰 PRICE (YOUR LOGIC)
+// 💰 PRICE
 app.get("/price", async (req, res) => {
   try {
-    const country = req.query.country;
-    const service = req.query.service;
+    const { country, service } = req.query;
 
-    if (!country || !service) {
-      return res.json({ price: 0 });
-    }
-
-    const r = await fetch(
-      `https://5sim.net/v1/guest/prices?country=${country}`
-    );
-
+    const r = await fetch(`https://5sim.net/v1/guest/prices?country=${country}`);
     const data = await r.json();
 
     const serviceData = data[country]?.[service];
-
-    if (!serviceData) {
-      return res.json({ price: 0 });
-    }
+    if (!serviceData) return res.json({ price: 0 });
 
     const first = Object.values(serviceData)[0];
+    const costNGN = first.cost * 1500;
 
-    if (!first || !first.cost) {
-      return res.json({ price: 0 });
-    }
-
-    const costUSD = first.cost;
-
-    const rate = 1500;
-    const costNGN = costUSD * rate;
-
-    let profit = 3000;
-
-    const highTier = ["usa", "england", "canada", "australia"];
-
-    const africa = [
-      "nigeria", "ghana", "kenya", "southafrica",
-      "uganda", "tanzania", "cameroon", "senegal",
-      "ivorycoast", "ethiopia"
-    ];
-
-    if (country === "italy" && service.includes("whatsapp")) {
-      profit = 5000;
-    }
-    else if (highTier.includes(country)) {
-      profit = 3500;
-    }
-    else if (africa.includes(country)) {
-      profit = 2500;
-    }
-
-    const finalPrice = Math.ceil(costNGN + profit);
-
+    const finalPrice = Math.ceil(costNGN + 3000);
     res.json({ price: finalPrice });
 
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Failed to get price" });
+  } catch {
+    res.status(500).json({ error: "Failed" });
   }
 });
 
 
-// 🔥 BUY NUMBER (REAL)
+// 🔥 BUY NUMBER (NO VERIFY HERE)
 app.post("/buy-number", async (req, res) => {
   try {
-    console.log("BUY-OTP BODY:", req.body);
     const { country, service, reference } = req.body;
-    console.log("Incoming:", country, service);
-// ❌ NO REFERENCE
-if (!reference) {
-  return res.json({ error: "No payment reference" });
-}
 
-// ❌ BLOCK REUSE
-if (usedRefs.has(reference)) {
-  return res.json({ error: "Already used" });
-}
+    if (!reference) return res.json({ error: "No reference" });
+    if (usedRefs.has(reference)) return res.json({ error: "Used" });
 
-  // 🔥 VERIFY PAYMENT
-  const verify = await fetch(`https://api.korapay.com/merchant/api/v1/charges/${reference}`, {
-    headers: {
-      Authorization: `Bearer ${process.env.KORAPAY_SECRET}`
-    }
-  });
+    usedRefs.add(reference);
 
-  const data = await verify.json();
-
-  if (!(data.status && data.data.status === "success")) {
-    return res.json({ error: "Payment not verified" });
-  }
-
-  // ✅ MARK USED
-  usedRefs.add(reference);
     const r = await fetch(
       `https://5sim.net/v1/user/buy/activation/${country}/any/${service}`,
       {
-        headers: {
-          Authorization: `Bearer ${API_KEY}`
-        }
+        headers: { Authorization: `Bearer ${API_KEY}` }
       }
     );
 
     const result = await r.json();
-    console.log("5sim response:", result);
-
     res.json(result);
 
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Failed to buy number" });
+  } catch {
+    res.status(500).json({ error: "Failed" });
   }
 });
 
 
 // 📩 CHECK OTP
 app.get("/check", async (req, res) => {
-  try {
-    const { id } = req.query;
+  const { id } = req.query;
 
-    const r = await fetch(
-      `https://5sim.net/v1/user/check/${id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${API_KEY}`
-        }
-      }
-    );
+  const r = await fetch(`https://5sim.net/v1/user/check/${id}`, {
+    headers: { Authorization: `Bearer ${API_KEY}` }
+  });
 
-    const data = await r.json();
-
-    res.json(data);
-
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Failed to check SMS" });
-  }
+  const data = await r.json();
+  res.json(data);
 });
 
-// ✅ NEW WALLET SYSTEM
-app.post("/buy-otp", async (req, res) => {
-  console.log("BUY-OTP BODY:", req.body);
-  const { email, amount, country, service } = req.body;
 
-  try {
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.json({ success: false, message: "User not found" });
-    }
-
-    if (user.balance < amount) {
-      return res.json({ success: false, message: "Insufficient balance" });
-    }
-
-    // ✅ Deduct balance
-    user.balance -= amount;
-    await user.save();
-
-    // ✅ Call 5SIM
-    const otpRes = await fetch(`https://5sim.net/v1/user/buy/activation/${country}/any/${service}`, {
-      headers: {
-        Authorization: `Bearer ${process.env.API_KEY}`
-      }
-    });
-
-    const otpData = await otpRes.json();
-
-    // ❌ If 5SIM failed → refund user
-    if (!otpData || otpData.error) {
-      user.balance += amount;
-      await user.save();
-
-      return res.json({
-        success: false,
-        message: "OTP purchase failed"
-      });
-    }
-
-    console.log("OTP:", otpData);
-
-    return res.json({
-      success: true,
-      data: otpData   // optional but useful later
-    });
-
-  } catch (err) {
-    console.log(err);
-    return res.json({ success: false, message: "Server error" });
-  }
-});
-
-// 🔥👇 PASTE YOUR KORAPAY CODE HERE
-app.post("/create-payment", async (req, res) => {
-  try {
-    const { email, amount, country, service } = req.body;
-
-    const reference = "OTP_" + Date.now();
-
-    const response = await fetch("https://api.korapay.com/merchant/api/v1/charges/initialize", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.KORAPAY_SECRET}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-  amount: amount,
-  currency: "NGN",
-  reference: reference,
-  customer: {
-    email: email
-  },
-  redirect_url: "https://otp-site.onrender.com/success.html"  
-})
-});
-
- const data = await response.json();
-
-res.json(data);
-
-} catch (err) {
-  console.log(err);
-  res.status(500).json({ error: "Payment failed" });
-}
-});   
-    
+// 💳 FUND WALLET
 app.post("/fund-wallet", async (req, res) => {
-  console.log("FUND WALLET HIT:", req.body);
-
   try {
     const { email, amount } = req.body;
-
-    if (!email || !amount) {
-      return res.json({ status: false, message: "Missing email or amount" });
-    }
-
-    if (amount < 1000 || amount > 100000) {
-      return res.json({
-        status: false,
-        message: "Amount must be between ₦1,000 and ₦100,000"
-      });
-    }
 
     const reference = "FUND_" + Date.now();
 
     const response = await fetch("https://api.korapay.com/merchant/api/v1/charges/initialize", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.KORAPAY_SECRET}`,
+        Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
         amount: Number(amount),
         currency: "NGN",
-        reference: reference,
-        customer: {
-          email: email
-        },
-        redirect_url: "https://otp-site.onrender.com/success.html?type=fund"
+        reference,
+        customer: { email },
+        redirect_url: `https://otp-site.onrender.com/success.html?reference=${reference}`
       })
     });
 
     const data = await response.json();
 
-    console.log("KORAPAY RESPONSE:", data);
-
-    if (!data || !data.data || !data.data.checkout_url) {
-      return res.json({ error: "No checkout url", full: data });
-    }
-
-    return res.json({
-      checkout_url: data.data.checkout_url
+    res.json({
+      checkout_url: data?.data?.checkout_url
     });
 
-  } catch (err) {
-    console.log("ERROR:", err);
-    return res.json({ error: "server error" });
+  } catch {
+    res.json({ error: "Failed" });
   }
-}); 
+});
 
+
+// 🔥 VERIFY PAYMENT (ONLY ONE)
 app.get("/verify-payment", async (req, res) => {
-  try {
-    const { reference } = req.query;
-
-    if (!reference) {
-      return res.json({ success: false });
-    }
-
-    const verify = await fetch(
-      `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.KORAPAY_SECRET}`
-        }
-      }
-    );
-
-    const data = await verify.json();
-
-    console.log("VERIFY:", data);
-
-    if (data.status === true && data.data.status === "success") {
-      return res.json({
-        success: true,
-        amount: data.data.amount,
-        email: data.data.customer.email
-      });
-    } else {
-      return res.json({ success: false });
-    }
-
-  } catch (err) {
-    console.log(err);
-    return res.json({ success: false });
-  }
-});
-
-// 🚀 SERVER
-const PORT = process.env.PORT || 3000;
-
-// 💰 FUND WALLET (KORAPAY)
-app.post("/fund-wallet", async (req, res) => {
-  const { email, amount } = req.body;
-
-  try {
-    const response = await fetch("https://api.korapay.com/merchant/api/v1/charges/initialize", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${process.env.KORAPAY_SECRET}`
-  },
-  body: JSON.stringify({
-    amount,
-    currency: "NGN",
-    reference: "ref_" + Date.now(),
-    customer: { email },
-    notification_url: "https://otp-backend-srw4.onrender.com/webhook",
-    callback_url: `https://otp-site.onrender.com/success.html?email=${email}`
-  })
-});
-
-    const data = await response.json();
-
-    res.json(data);
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Payment init failed" });
-  }
-});
-
-// 🔔 KORAPAY WEBHOOK
-app.post("/webhook", async (req, res) => {
-  try {
-    const event = req.body;
-
-    console.log("Webhook received:", event);
-
-    if (event.event === "charge.success") {
-      const email = event.data.customer.email;
-      const amount = event.data.amount;
-
-      let user = await User.findOne({ email });
-
-      if (!user) {
-        user = new User({ email, balance: 0 });
-      }
-
-      user.balance += amount;
-      await user.save();
-
-      console.log("Wallet funded:", email, amount);
-    }
-
-    res.sendStatus(200);
-  } catch (err) {
-    console.log("Webhook error:", err);
-    res.sendStatus(500);
-  }
-});
-
-// 👇 ADD THIS NOW
-app.post("/verify-payment", async (req, res) => {
-  const { reference } = req.body;
-
-  try {
-    const response = await fetch(`https://api.korapay.com/merchant/api/v1/charges/${reference}`, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${process.env.KORAPAY_SECRET}`
-      }
-    });
-
-    const data = await response.json();
-
-    if (data.data.status === "success") {
-      return res.json({ success: true });
-    } else {
-      return res.json({ success: false });
-    }
-
-  } catch (err) {
-    console.log(err);
-    return res.json({ success: false });
-  }
-});
-
-app.get("/balance", async (req, res) => {
-  const email = req.query.email;
-
-  try {
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.json({ balance: 0 });
-    }
-
-    res.json({ balance: user.balance });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ balance: 0 });
-  }
-});
-
-app.get("/", (req, res) => {
-  res.send("Backend is working");
-});
-
-app.get("/fund-wallet", async (req, res) => {
-  const amount = req.query.amount;
-  const email = req.query.email;
-
-  if (!amount) {
-    return res.send("Amount is required");
-  }
-
-  if (!email) {
-    return res.send("Email is required");
-  }
-
-  try {
-    const reference = "ref_" + Date.now();
-
-    const response = await fetch("https://api.korapay.com/merchant/api/v1/charges/initialize", {
-  method: "POST",
-  headers: {
-    Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`,
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    amount: Number(amount),
-    currency: "NGN",
-    reference: reference,
-    redirect_url: `https://otp-site.onrender.com/success.html?ref=${reference}`,
-    customer: {
-      name: "OTP User",
-      email: "user@email.com"
-    }
-  })
-});
-
-const data = await response.json();
-
-console.log("🔥 FULL KORA RESPONSE:", data);
-
-// ❌ If Kora failed OR returned empty
-if (!data.status || !data.data) {
-  return res.send(data.message || "Kora initialization failed");
-}
-
-// ❌ If checkout_url missing
-if (!data.data.checkout_url) {
-  return res.send("No checkout URL returned from Kora");
-}
-
-// ✅ Success
-const checkoutUrl = data.data.checkout_url;
-res.redirect(checkoutUrl);
-    
-  } catch (error) {
-    console.log("🔥 KORA ERROR:", error);
-res.send(error.message);
-  }
-});
-
-app.get("/verify-payment", async (req, res) => {
-  const reference = req.query.reference;
-
-  if (!reference) {
-    return res.json({ success: false });
-  }
+  const { reference } = req.query;
 
   try {
     const response = await fetch(
-  `https://api.korapay.com/merchant/api/v1/transactions/${reference}`,
+      `https://api.korapay.com/merchant/api/v1/transactions/${reference}`,
       {
-        method: "GET",
         headers: {
-          Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`,
-          "Content-Type": "application/json"
+          Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`
         }
       }
     );
 
     const result = await response.json();
+    const data = result?.data;
 
-console.log("VERIFY RESPONSE:", result);
+    if (data?.status === "success" || data?.status === "successful") {
 
-// ✅ safer data check
-const data = result?.data;
+      const email = data.customer?.email;
+      const amount = data.amount;
 
-if (!data) {
-  console.log("NO DATA FROM KORA");
-  return res.json({ success: false });
-}
+      let user = await User.findOne({ email });
 
-console.log("VERIFY STATUS:", data.status);
+      if (!user) user = new User({ email, balance: 0 });
 
-// ✅ FIX: accept both success & successful
-if (data.status === "success" || data.status === "successful") {
+      user.balance += amount;
+      await user.save();
 
-  const amount = data.amount;
-  const email = data.customer?.email;
+      return res.json({ success: true });
+    }
 
-  console.log("SUCCESS PAYMENT:", amount, email);
+    res.json({ success: false });
 
-  let user = await User.findOne({ email });
-
-  if (!user) {
-    user = new User({ email, balance: 0 });
+  } catch {
+    res.json({ success: false });
   }
-
-  user.balance += amount;
-  await user.save();
-
-  return res.json({ success: true });
-}
-
-// ❌ not successful
-return res.json({ success: false });
-
-} catch (err) {
-  console.log("VERIFY ERROR:", err.message);
-  return res.json({ success: false });
-}
 });
 
-// ✅ START SERVER
-app.listen(PORT, () => {
-  console.log("Server running 🚀");
+
+// 💰 BALANCE
+app.get("/balance", async (req, res) => {
+  const user = await User.findOne({ email: req.query.email });
+  res.json({ balance: user?.balance || 0 });
 });
+
+
+app.get("/", (req, res) => {
+  res.send("Backend running");
+});
+
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log("🚀 Server running"));
