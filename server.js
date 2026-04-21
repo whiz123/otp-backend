@@ -590,7 +590,7 @@ app.get("/verify-payment", async (req, res) => {
 
   try {
     const response = await fetch(
-      `https://api.korapay.com/merchant/api/v1/transactions/${reference}`,
+  `https://api.korapay.com/merchant/api/v1/transactions/${reference}`,
       {
         method: "GET",
         headers: {
