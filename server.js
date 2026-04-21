@@ -348,15 +348,20 @@ app.get("/fund-wallet", async (req, res) => {
     "Content-Type": "application/json"
   },
   body: JSON.stringify({
-    amount: Number(amount),
-    currency: "NGN",
-    reference: reference,
-    redirect_url: `https://otp-site.onrender.com/success.html?ref=${reference}`,
-    customer: {
-      name: "OTP User",
-      email: "user@email.com"
-    }
-  })
+  amount: Number(amount),
+  currency: "NGN",
+  reference: reference,
+  redirect_url: `https://otp-site.onrender.com/success.html?ref=${reference}`,
+
+  customer: {
+    name: "OTP User",
+    email: email
+  },
+
+  metadata: {
+    email: email
+  }
+})
 });
 
 const data = await response.json();
