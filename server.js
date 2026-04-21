@@ -582,61 +582,44 @@ res.send(error.message);
 });
 
 app.get("/verify-payment", async (req, res) => {
-  const reference = req.query.reference;
+  const { reference } = req.query;
 
   if (!reference) {
-    return res.json({ success: false, message: "No reference provided" });
+    return res.json({ success: false, message: "No reference" });
   }
 
   try {
-    const response = await fetch(
-      `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`,
-          "Content-Type": "application/json"
-        }
+    const response = await fetch(`https://api.korapay.com/merchant/api/v1/charges/${reference}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`
+        "Content-Type": "application/json"
       }
-    );
+    });
 
-    const result = await response.json();
+    const data = await response.json();
 
-    console.log("VERIFY RESPONSE:", result);
+    console.log("KORAPAY VERIFY:", data);
 
-    // ❌ if no data
-    if (!result || !result.data) {
-      return res.json({ success: false });
-    }
+    if (data?.data?.status === "success") {
 
-    const data = result.data;
+      const email = data.data.customer?.email;
+      const amount = data.data.amount;
 
-    // ✅ PAYMENT SUCCESS
-    if (data.status === "success") {
-      const amount = data.amount;
-      const email = data.customer?.email;
-
-      console.log("SUCCESS PAYMENT:", amount, email);
-
-      // 🔥 OPTIONAL: update wallet (only if user exists)
-      if (email && typeof User !== "undefined") {
-        const user = await User.findOne({ email });
-
-        if (user) {
-          user.balance += amount;
-          await user.save();
-        }
-      }
+      // ✅ CREDIT USER
+      await users.updateOne(
+        { email: email },
+        { $inc: { balance: amount } }
+      );
 
       return res.json({ success: true });
     }
 
-    // ❌ NOT SUCCESS
-    return res.json({ success: false });
+    return res.json({ success: false, message: "Not successful" });
 
-  } catch (error) {
-    console.log("VERIFY ERROR:", error.message);
-    return res.json({ success: false });
+  } catch (err) {
+    console.log(err);
+    return res.json({ success: false, message: "Server error" });
   }
 });
 
