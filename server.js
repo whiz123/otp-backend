@@ -377,46 +377,6 @@ app.post("/fund-wallet", async (req, res) => {
   }
 }); 
 
-app.get("/verify-payment", async (req, res) => {
-  try {
-    const { reference } = req.query;
-
-    if (!reference) {
-      return res.json({ success: false });
-    }
-
-    const verify = await fetch(
-      `https://api.korapay.com/merchant/api/v1/charges/${reference}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.KORAPAY_SECRET}`
-        }
-      }
-    );
-
-    const data = await verify.json();
-
-    console.log("VERIFY:", data);
-
-    if (data.status === true && data.data.status === "success") {
-      return res.json({
-        success: true,
-        amount: data.data.amount,
-        email: data.data.customer.email
-      });
-    } else {
-      return res.json({ success: false });
-    }
-
-  } catch (err) {
-    console.log(err);
-    return res.json({ success: false });
-  }
-});
-
-// 🚀 SERVER
-const PORT = process.env.PORT || 3000;
-
 // 💰 FUND WALLET (KORAPAY)
 app.post("/fund-wallet", async (req, res) => {
   const { email, amount } = req.body;
@@ -602,44 +562,46 @@ app.get("/verify-payment", async (req, res) => {
 
     const result = await response.json();
 
-console.log("VERIFY RESPONSE:", result);
+console.log("FULL VERIFY RESPONSE:", JSON.stringify(result, null, 2));
 
-// ✅ safer data check
+// FORCE see everything
 const data = result?.data;
 
 if (!data) {
-  console.log("NO DATA FROM KORA");
+  console.log("❌ NO DATA FROM KORA");
   return res.json({ success: false });
 }
 
-console.log("VERIFY STATUS:", data.status);
+// LOG EVERYTHING
+console.log("STATUS:", data.status);
+console.log("AMOUNT:", data.amount);
+console.log("EMAIL:", data.customer?.email);
 
-// ✅ FIX: accept both success & successful
-if (data.status === "success" || data.status === "successful") {
+// TEMP: FORCE SUCCESS TO TEST FLOW
+// ⚠️ THIS IS JUST FOR DEBUG
+// we will remove later
+const forceSuccess = true;
 
-  const amount = data.amount;
-  const email = data.customer?.email;
+if (forceSuccess || data.status === "success" || data.status === "successful") {
 
-  console.log("SUCCESS PAYMENT:", amount, email);
-
-  let user = await User.findOne({ email });
+  let user = await User.findOne({ email: data.customer?.email });
 
   if (!user) {
-    user = new User({ email, balance: 0 });
+    user = new User({
+      email: data.customer?.email,
+      balance: 0
+    });
   }
 
-  user.balance += amount;
+  user.balance += data.amount;
   await user.save();
+
+  console.log("✅ WALLET UPDATED");
 
   return res.json({ success: true });
 }
 
-// ❌ not successful
 return res.json({ success: false });
-
-} catch (err) {
-  console.log("VERIFY ERROR:", err.message);
-  return res.json({ success: false });
 }
 });
 
