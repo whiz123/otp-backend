@@ -594,7 +594,7 @@ app.get("/verify-payment", async (req, res) => {
       {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${process.env.KORAPAY_SECRET_KEY}`,
+          Authorization: "Bearer sk_live_xzvzssC2QaWUdyVZ9wYS4TDuiK2nVtDkhMSXt4R7",
           "Content-Type": "application/json"
         }
       }
