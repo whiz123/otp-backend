@@ -612,34 +612,43 @@ app.get("/verify-payment", async (req, res) => {
     const data = result.data;
 
     // ✅ PAYMENT SUCCESS
-    if (data.status === "success") {
-      const amount = data.amount;
-      const email = data.customer?.email;
+if (data?.data?.status === "success") {
 
-      console.log("SUCCESS PAYMENT:", amount, email);
+  const amount = data.data.amount;
+  const email = data.data.customer?.email;
 
-      // 🔥 OPTIONAL: update wallet (only if user exists)
-      if (email && typeof User !== "undefined") {
-        const user = await User.findOne({ email });
+  console.log("SUCCESS PAYMENT:", amount, email);
 
-        if (user) {
-          user.balance += amount;
-          await user.save();
-        }
-      }
+  // ✅ FIND USER
+  let user = await User.findOne({ email });
 
-      return res.json({ success: true });
-    }
-
-    // ❌ NOT SUCCESS
-    return res.json({ success: false });
-
-  } catch (error) {
-    console.log("VERIFY ERROR:", error.message);
-    return res.json({ success: false });
+  // ✅ CREATE USER IF NOT EXIST
+  if (!user) {
+    user = new User({
+      email: email,
+      balance: 0
+    });
   }
+
+  // ✅ ADD BALANCE
+  user.balance += amount;
+
+  // ✅ SAVE USER
+  await user.save();
+
+  return res.json({ success: true });
+}
+
+// ❌ NOT SUCCESS
+return res.json({ success: false });
+
+} catch (error) {
+  console.log("VERIFY ERROR:", error.message);
+  return res.json({ success: false });
+}
 });
 
+// ✅ START SERVER
 app.listen(PORT, () => {
   console.log("Server running 🚀");
 });
