@@ -454,6 +454,25 @@ app.get("/verify-payment", async (req, res) => {
   }
 });
 
+app.get("/get-user", async (req, res) => {
+  const email = req.query.email;
+
+  if (!email) {
+    return res.json({ success: false });
+  }
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    return res.json({ success: true, balance: 0 });
+  }
+
+  res.json({
+    success: true,
+    balance: user.balance
+  });
+});
+
 // START SERVER
 const PORT = process.env.PORT || 3000;
 
